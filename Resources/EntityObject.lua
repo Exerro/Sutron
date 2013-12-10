@@ -14,13 +14,13 @@ game.newEntityObject = function( )
     t.link = false
     
     t.render = function( self )
-      if self.frames[self.frame] then
-        love.graphics.draw( self.frames[self.frame], self.x, self.y, 0, self.direction == "right" and -1 or 1 )
-      end
-      self.frame = self.frame + 1
-      if self.frame > #self.frames then
-          self.frame = 1
-      end
+		if self.frames[self.frame] then
+			love.graphics.draw( self.frames[self.frame], self.x, self.y, 0, self.direction == "right" and -1 or 1 )
+		end
+		self.frame = self.frame + 1
+		if self.frame > #self.frames then
+			self.frame = 1
+		end
     end
     
     t.newFrame = function( self, frame )
@@ -46,16 +46,16 @@ game.newEntityObject = function( )
 	end
     
     t.move = function( self, mode, x, y )
-      if mode == "add" then
-        y = self.x + x
-        x = self.y + y
-      elseif mode ~= "set" then
-        error( "Unsupported movement mode: "..tostring( mode )..", use \"set\" or \"add\"" )
-      end
-      self.x, self.y = x, y
-      if self.link and self.link.move then
-      	self.link:move( x, y )
-      end
+		if mode == "add" then
+			y = self.x + x
+			x = self.y + y
+		elseif mode ~= "set" then
+			error( "Unsupported movement mode: "..tostring( mode )..", use \"set\" or \"add\"" )
+		end
+		self.x, self.y = x, y
+		if self.link and self.link.move then
+			self.link:move( x, y )
+		end
     end
     
     t.moveBack = function( self )
