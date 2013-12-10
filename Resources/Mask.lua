@@ -18,7 +18,7 @@ function newCollisionMap( file )
   for x = 1, imageData:getWidth() do
     game.mask[maskname][x] = { }
     for y = 1, imageData:getHeight() do
-      game.mask[maskname][y] = (  { imageData:getPixel(x,y) }[4] == 0 )
+      game.mask[maskname][x][y] = (  { imageData:getPixel(x,y) }[4] == 0 )
     end
   end
   
