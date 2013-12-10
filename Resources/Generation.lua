@@ -1,0 +1,1 @@
+game.generation = { }game.generation.newColumn = function( map, x )	local column = { }	for y = 1,game.mapHeight do		if y < game.seaLevel then			column[y] = game.newBlock( "Air" )		else			column[y] = game.newBlock( "Stone" )		end	end	map[x] = columnend
