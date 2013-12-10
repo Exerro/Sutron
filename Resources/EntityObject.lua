@@ -7,6 +7,10 @@ game.newEntityObject = function( )
     t.w, t.h = 1, 1
     t.frames = { }
     t.frame = 1
+    t.health = 100
+    t.maxhealth = 100
+    t.inventory = game.newInventoryObject( )
+    t.alive = true
     
     t.render = function( self )
       if self.frames[self.frame] then
@@ -21,6 +25,15 @@ game.newEntityObject = function( )
     t.newFrame = function( self, frame )
         local image = type( frame ) == "string" and love.graphics.newImage( frame ) or frame
         table.insert( self.frames, image )
+    end
+    
+    t.setHealth = function( self, health )
+    	self.health = health
+    	if self.health <= 0 and self.onDeath then
+    		self:onDeath( )
+    	else
+    		self.alive = false
+    	end
     end
     
     t.setDirection = function( self, dir )
