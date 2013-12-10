@@ -1,6 +1,7 @@
 
+require "Resources/ItemObject"
 game.items = love.filesystem.enumerate( "Resources/Items" )
 
-game.newItemObject = function( )
+game.newInventoryObject = function( )
 	
 end
