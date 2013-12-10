@@ -6,21 +6,21 @@ function getFileName( file )
 end
 
 function loadImage( file )
-  game.mask[getFileName( file )] = love.graphics.newImage( file )
-  return game.mask[getFileName( file )]
+  game.mask.image[getFileName( file )] = love.graphics.newImage( file )
+  return game.mask.image[getFileName( file )]
 end
 
 function newCollisionMap( file )
   local maskname = getFileName( file )
   local imageData = love.image.newImageData( file )
   
-  game.mask[maskname] = { }
+  game.mask.data.collision[maskname] = { }
   for x = 1, imageData:getWidth() do
-    game.mask[maskname][x] = { }
+    game.mask.data.collision[maskname][x] = { }
     for y = 1, imageData:getHeight() do
-      game.mask[maskname][x][y] = (  { imageData:getPixel(x,y) }[4] == 0 )
+      game.mask.data.collision[maskname][x][y] = (  { imageData:getPixel(x,y) }[4] == 0 )
     end
   end
   
-  return game.mask[maskname]
+  return game.mask.data.collision[maskname]
 end
