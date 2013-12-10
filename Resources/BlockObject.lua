@@ -1,4 +1,3 @@
-
 game.blocks = {
 	["Air"] = {
 		solid = false;
@@ -97,13 +96,4 @@ game.newBlock = function( type )
 	local block = game.newBlockObject( )
 	block:setType( type )
 	return block
-end
-
-local blocks = love.filesystem.enumerate( "Resources/Blocks" )
-for k, v in pairs( blocks ) do
-	local images = love.filesystem.enumerate( "Resources/Blocks/"..v.."/Images" )
-	for i = 1,#images do
-		local name = images[i]:sub( 1, #images[i] - 4 )
-		game.images["Blocks."..v.."."..name] = love.graphics.newImage( "Resources/Blocks/"..v.."/Images/"..images[i] )
-	end
 end
