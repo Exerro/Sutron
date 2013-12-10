@@ -16,12 +16,20 @@ require "Resources/BlockObject"
 require "Resources/InventoryObject"
 require "Resources/EntityObject"
 require "Resources/Map"
+require "Resources/CameraObject"
 
 function love.load( )
-	-- what will happen when the game loads
-	-- nothing....
-	
-	-- yet
+	entity = game.newEntityObject( )
+	camera = game.newCameraObject( )
+	camera:linkTo( entity )
+end
+
+function love.update( dt )
+	if love.keyboard.isDown( "d" ) then
+		entity:move( "add", 1, 0 )
+	elseif love.keyboard.isDown( "a" ) then
+		entity:move( "add", -1, 0 )
+	end
 end
 
 function love.update( dt )
@@ -37,6 +45,8 @@ function love.mousepressed( x, y, button )
 end
 
 function love.draw( )
+	love.graphics.print( camera.x..", "..camera.y, 1, 1 )
+end
 	-- draw these high end grapics that really impact your GTX Titan
 	love.graphics.print( game.title, 1, 1 )
 end
