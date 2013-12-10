@@ -5,7 +5,7 @@ function getFileName( file )
   return table.concat( filename, "." )
 end
 
-function loadImage( file )
+function newImage( file )
   game.mask.image[getFileName( file )] = love.graphics.newImage( file )
   return game.mask.image[getFileName( file )]
 end
@@ -23,4 +23,8 @@ function newCollisionMap( file )
   end
   
   return game.mask.data.collision[maskname]
+end
+
+function loadAll()
+  for k,v in pairs(love.filesystem.enumerate( "Resources/Masks/Images" )) do newImage(v) newCollisionMap(v) end
 end
