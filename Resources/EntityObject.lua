@@ -11,6 +11,7 @@ game.newEntityObject = function( )
     t.maxhealth = 100
     t.inventory = game.newInventoryObject( )
     t.alive = true
+    t.link = false
     
     t.render = function( self )
       if self.frames[self.frame] then
@@ -46,18 +47,19 @@ game.newEntityObject = function( )
     
     t.move = function( self, mode, x, y )
       if mode == "add" then
-        self.x = self.x + x
-        self.y = self.y + y
-      elseif mode == "set" then
-        self.x = x
-        self.y = y
-      else
+        y = self.x + x
+        x = self.y + y
+      elseif mode ~= "set" then
         error( "Unsupported movement mode: "..tostring( mode )..", use \"set\" or \"add\"" )
+      end
+      self.x, self.y = x, y
+      if self.link and self.link.move then
+      	self.link:move( x, y )
+      end
     end
     
     t.moveBack = function( self )
-        self.x = self.ox
-        self.y = self.oy
+        self:move( self.ox, self.oy )
     end
     
     t.applyVelocity = function( self, x, y )
