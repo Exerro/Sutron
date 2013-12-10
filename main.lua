@@ -1,11 +1,17 @@
 -- Define some global game variables that we will be needing later
 
 game.blockSize = 32
-game.images = { }
 game.mapHeight = 256 -- mapWidth is infinite
 game.seaLevel = 128
 game.blockCountX = math.ceil( love.graphics.getWidth( ) / game.blockSize )
 game.blockCountY = math.ceil( love.graphics.getHeight( ) / game.blockSize )
+
+-- define all the grapical storage
+game.images = { }
+game.mask = { }
+game.mask.image = { }
+game.mask.data = { }
+game.mask.data.collision = { }
 
 -- require high level classes (Core classes)
 require "Resources/Utils"
