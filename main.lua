@@ -7,7 +7,6 @@ game.blockCountX = math.ceil( love.graphics.getWidth( ) / game.blockSize )
 game.blockCountY = math.ceil( love.graphics.getHeight( ) / game.blockSize )
 
 -- define all the grapical storage
-game.images = { }
 game.mask = { }
 game.mask.image = { }
 game.mask.data = { }
@@ -25,6 +24,8 @@ require "Resources/Map"
 require "Resources/CameraObject"
 
 function love.load( )
+	loadAll() -- load all the images from the folders using the mask class
+	
 	entity = game.newEntityObject( )
 	camera = game.newCameraObject( )
 	camera:linkTo( entity )
