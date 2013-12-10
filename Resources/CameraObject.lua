@@ -9,6 +9,7 @@ game.newCameraObject = function( )
 	
 	t.linkTo = function( self, link )
 		self.link = link
+		link.link = self
 	end
 
 	t.render = function( self, map )
