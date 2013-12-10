@@ -1,4 +1,3 @@
-
 game.newCameraObject = function( )
 	local t = { }
 	t.x, t.y = 1, 1
@@ -8,7 +7,7 @@ game.newCameraObject = function( )
 		self.x, self.y = x, y
 	end
 	
-	t.link = function( self, link )
+	t.linkTo = function( self, link )
 		self.link = link
 	end
 
