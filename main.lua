@@ -45,8 +45,7 @@ function love.mousepressed( x, y, button )
 end
 
 function love.draw( )
-	love.graphics.print( camera.x..", "..camera.y, 1, 1 )
-end
+	love.graphics.print( camera.x..", "..camera.y, 1, 20 )
 	-- draw these high end grapics that really impact your GTX Titan
 	love.graphics.print( game.title, 1, 1 )
 end
