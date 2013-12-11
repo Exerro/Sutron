@@ -1,12 +1,21 @@
-game.blocks = {
+
+local blocks = {
 	["Air"] = {
 		solid = false;
 		transparent = true;
 		render = function( self, x, y )
 			if y > game.seaLevel then
-				
+				love.graphics.draw( game.imageData.Blocks.Air.belowGround.image )
 			else
-				love.graphics.draw(  )
+				love.graphics.draw( game.imageData.Blocks.Air.aboveGround.image )
+			end
+		end;
+		getCollisionMap = function( self )
+			local y = self.position.y
+			if y > game.seaLevel then
+				love.graphics.draw( game.imageData.Blocks.Air.belowGround.image )
+			else
+				love.graphics.draw( game.imageData.Blocks.Air.aboveGround.image )
 			end
 		end;
 	};
@@ -38,6 +47,9 @@ game.createBlockObject = function( parent )
 			local x, y = x or self.position.x, y or self.position.y
 			love.graphics.draw( self.image, x, y )
 		end
+	end
+	t.getCollisionMap = function( self )
+		return game.imageData.Blocks[self.type].Texture.image
 	end
 	t.update = function( self )
 		
@@ -73,7 +85,8 @@ game.createBlockObject = function( parent )
 			self:onDestroy( )
 		end
 	end
-	t.isColliding = function( self, x, y, w, h )
+	t.isColliding = function( self, other )
+		local x, y, w, h = other.x, other.y, other.w, other.h
 		local t, b
 		if self.position.y > y then
 			t, b = self.position.y, y + h - 1
@@ -87,7 +100,8 @@ game.createBlockObject = function( parent )
 		else
 			r, l = x, self.position.x + self.position.w - 1
 		end
-		return l >= r
+		if l < r then return false end
+		
 	end
 	return t
 end

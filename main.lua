@@ -24,18 +24,19 @@ require "Resources/Map"
 require "Resources/CameraObject"
 
 function love.load( )
-	loadAll() -- load all the images from the folders using the mask class
+	-- loadAll() -- load all the images from the folders using the mask class
+	-- Changed this to be called at the end of mask.lua -Ben
 	
-	entity = game.newEntityObject( )
-	camera = game.newCameraObject( )
-	camera:linkTo( entity )
+	game.entity = game.newEntityObject( )
+	game.camera = game.newCameraObject( )
+	game.camera:linkTo( game.entity )
 end
 
 function love.update( dt )
 	if love.keyboard.isDown( "d" ) then
-		entity:move( "add", 1, 0 )
+		game.entity:move( "add", 1, 0 )
 	elseif love.keyboard.isDown( "a" ) then
-		entity:move( "add", -1, 0 )
+		game.entity:move( "add", -1, 0 )
 	end
 end
 
@@ -52,7 +53,7 @@ function love.mousepressed( x, y, button )
 end
 
 function love.draw( )
-	love.graphics.print( camera.x..", "..camera.y, 1, 20 )
+	love.graphics.print( game.camera.x..", "..game.camera.y, 1, 20 )
 	-- draw these high end grapics that really impact your GTX Titan
 	love.graphics.print( game.title, 1, 1 )
 end

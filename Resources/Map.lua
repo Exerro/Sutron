@@ -4,10 +4,11 @@ game.map = { }
 game.map.newColumn = function( self, x )
 	self[x] = game.generation.generateColumn( self, x )
 	for y = 1,#self[x] do
-		self[x][y].parent = self[x][y]
+		self[x][y].block:setParent( self[x][y] )
+		self[x][y].block:move( x, y )
 		self[x][y].light = 0
 		self[x][y].x = x
-		self[x][y] = y
+		self[x][y].y = y
 		self[x][y].move = function( self, x, y )
 			if game.map[x] and game.map[x][y] and game.map[x][y].onDestroy then
 				game.map[x][y]:onDestroy( "Replace" )
@@ -19,6 +20,10 @@ game.map.newColumn = function( self, x )
 			return false
 		end
 	end
+end
+
+for i = 1,game.blockCountX do
+	game.map:newColumn( i )
 end
 
 -- lighting will be done in the map, i.e map[y][x].lighting
