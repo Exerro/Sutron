@@ -19,7 +19,7 @@ game.newCameraObject = function( )
 		for x = math.floor( self.x - w/2 ), math.ceil( self.x + w/2 ) do
 			for y = math.floor( self.y - h/2 ), math.ceil( self.y + h/2 ) do
 				if map[x] and map[x][y] then
-					map[x][y]:render( ( self.x - x ) * game.blockSize + sw / 2, ( self.y - y ) * game.blockSize + sh / 2 )
+					map[x][y].block:render( ( self.x - x ) * game.blockSize + sw / 2, ( self.y - y ) * game.blockSize + sh / 2 )
 				end
 			end
 		end

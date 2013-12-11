@@ -4,8 +4,8 @@ local blocks = {
 		solid = false;
 		transparent = true;
 		render = function( self, x, y )
-			if y > game.seaLevel then
-				love.graphics.draw( game.imageData.Blocks.Air.belowGround.image )
+			if self.position.y > game.seaLevel then
+				love.graphics.draw( game.imageData.Blocks.Air.belowGround.image, x, y )
 			else
 				love.graphics.draw( game.imageData.Blocks.Air.aboveGround.image )
 			end
@@ -13,9 +13,9 @@ local blocks = {
 		getCollisionMap = function( self )
 			local y = self.position.y
 			if y > game.seaLevel then
-				love.graphics.draw( game.imageData.Blocks.Air.belowGround.image )
+				love.graphics.draw( game.imageData.Blocks.Air.belowGround.collisionMap )
 			else
-				love.graphics.draw( game.imageData.Blocks.Air.aboveGround.image )
+				love.graphics.draw( game.imageData.Blocks.Air.aboveGround.collisionMap )
 			end
 		end;
 	};
@@ -30,7 +30,7 @@ game.blockUpdateMethods = {
 	end;
 }
 
-game.createBlockObject = function( parent )
+game.newBlockObject = function( parent )
 	local t = { }
 	t.position = { x = 1, y = 1, w = game.blockSize, h = game.blockSize }
 	t.parent = parent -- or nil
@@ -56,9 +56,8 @@ game.createBlockObject = function( parent )
 	end
 	t.setType = function( self, type )
 		self.type = type
-		self.image = game.images["Blocks."..type] or love.graphics.newImage( "Resources/Blocks/"..type.."/Image.png" )
-		if game.blocks[type] then
-			for k, v in pairs( game.blocks[type] ) do
+		if blocks[type] then
+			for k, v in pairs( blocks[type] ) do
 				self[k] = v
 			end
 		end
@@ -69,7 +68,7 @@ game.createBlockObject = function( parent )
 	t.move = function( self, x, y )
 		self.position.x = x or self.position.x
 		self.position.y = y or self.position.y
-		if self.parent then
+		if self.parent and self.parent.move then
 			self.parent:move( x, y )
 		end
 	end

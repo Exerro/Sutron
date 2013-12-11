@@ -1,6 +1,6 @@
 game.generation = { }
 
-game.generation.newColumn = function( map, x )
+game.generation.generateColumn = function( map, x )
 	local column = { }
 	for y = 1,game.mapHeight do
 		column[y] = { }

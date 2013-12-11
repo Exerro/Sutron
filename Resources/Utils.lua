@@ -16,3 +16,19 @@ game.explode = function(d,p)
 	end
 	return t
 end
+
+game.split = function( str, pat )
+	if type( str ) ~= "string" then error( "Failed to split "..type( str ).." with "..pat, 2 ) end
+	local parts = { }
+	local last = 1
+	for i = 1,str:len( ) do
+		if str:sub( i, i + #pat - 1 ) == pat and last ~= i then
+			table.insert( parts, str:sub( last, i-1 ) )
+			last = i + 1
+		end
+	end
+	if last <= #str then
+		table.insert( parts, str:sub( last, #str ) )
+	end
+	return parts
+end

@@ -2,9 +2,11 @@
 game.imageData = { }
 
 local function getFileName( file )
-	local path = game.explode( file, "/" )
-	local filename = game.explode( path[#path], "." )
-	table.remove( filename, #filename )
+	local path = game.split( file, "/" )
+	local filename = game.split( path[#path], "." )
+	if #filename > 1 then
+		table.remove( filename, #filename )
+	end
 	return table.concat( filename, "." )
 end
 
@@ -23,10 +25,10 @@ loadPath = function( path, t )
 			local imageData = love.image.newImageData( path.."/"..files[i] )
  
 			for y = 1, imageData:getHeight( ) do
-				t[name][y] = { }
+				t[name].collisionMap[y] = { }
 				for x = 1, imageData:getWidth( ) do
-					local pixel = { imageData:getPixel( x, y ) }
-					t[name][y][x] = pixel[4] ~= 0
+					local pixel = { imageData:getPixel( x - 1, y - 1 ) }
+					t[name].collisionMap[y][x] = pixel[4] ~= 0
 				end
 			end
 		end

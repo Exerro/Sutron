@@ -1,11 +1,5 @@
 -- Define some global game variables that we will be needing later
 
-game.blockSize = 32
-game.mapHeight = 256 -- mapWidth is infinite
-game.seaLevel = 128
-game.blockCountX = math.ceil( love.graphics.getWidth( ) / game.blockSize )
-game.blockCountY = math.ceil( love.graphics.getHeight( ) / game.blockSize )
-
 -- define all the grapical storage
 game.mask = { }
 game.mask.image = { }
@@ -20,13 +14,13 @@ require "Resources/Mask"
 require "Resources/BlockObject"
 require "Resources/InventoryObject"
 require "Resources/EntityObject"
-require "Resources/Map"
 require "Resources/CameraObject"
+require "Resources/Map"
 
 function love.load( )
 	-- loadAll() -- load all the images from the folders using the mask class
 	-- Changed this to be called at the end of mask.lua -Ben
-	
+
 	game.entity = game.newEntityObject( )
 	game.camera = game.newCameraObject( )
 	game.camera:linkTo( game.entity )
@@ -40,10 +34,6 @@ function love.update( dt )
 	end
 end
 
-function love.update( dt )
-	-- tick
-end
-
 function love.keypressed( key, uni )
 	-- keyboard press
 end
@@ -53,7 +43,6 @@ function love.mousepressed( x, y, button )
 end
 
 function love.draw( )
-	love.graphics.print( game.camera.x..", "..game.camera.y, 1, 20 )
-	-- draw these high end grapics that really impact your GTX Titan
-	love.graphics.print( game.title, 1, 1 )
+	love.graphics.print( game.camera.x..", "..game.camera.y, 1, 1 )
+	game.camera:render( game.map )
 end
