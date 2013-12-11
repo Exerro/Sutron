@@ -28,9 +28,9 @@ end
 
 function love.update( dt )
 	if love.keyboard.isDown( "d" ) then
-		game.entity:move( "add", 1, 0 )
+		game.entity:move( "add", .1, 0 )
 	elseif love.keyboard.isDown( "a" ) then
-		game.entity:move( "add", -1, 0 )
+		game.entity:move( "add", -.1, 0 )
 	end
 end
 

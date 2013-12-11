@@ -1,3 +1,4 @@
+
 game.newEntityObject = function( )
     local t = { }
     t.x, t.y = 1, 1
@@ -47,8 +48,8 @@ game.newEntityObject = function( )
     
     t.move = function( self, mode, x, y )
 		if mode == "add" then
-			y = self.x + x
-			x = self.y + y
+			x = self.x + x
+			y = self.y + y
 		elseif mode ~= "set" then
 			error( "Unsupported movement mode: "..tostring( mode )..", use \"set\" or \"add\"" )
 		end
