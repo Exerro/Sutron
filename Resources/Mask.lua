@@ -1,4 +1,3 @@
-
 game.imageData = { }
 
 local function getFileName( file )
@@ -33,6 +32,10 @@ loadPath = function( path, t )
 			end
 		end
 	end
+end
+
+function getBlockGroupMask(group) 
+	-- generate a collision map based on a block group
 end
 
 loadPath( "Resources/Textures", game.imageData )
