@@ -11,6 +11,7 @@ require "Resources/Utils"
 require "Resources/Mask"
 
 -- require low level classes (Game Classes)
+require "Resources/InterfaceObject"
 require "Resources/BlockObject"
 require "Resources/InventoryObject"
 require "Resources/EntityObject"
@@ -21,21 +22,43 @@ function love.load( )
 	-- loadAll() -- load all the images from the folders using the mask class
 	-- Changed this to be called at the end of mask.lua -Ben
 
-	game.entity = game.newEntityObject( )
+	game.player = game.newEntityObject( )
+	game.player:resize( 50, 100 )
 	game.camera = game.newCameraObject( )
-	game.camera:linkTo( game.entity )
+	game.camera:linkTo( game.player )
+	table.insert( game.map.entities, game.player )
 end
 
 function love.update( dt )
+	local xl = game.camera:getLeftClipping( )
+	local xr = game.camera:getRightClipping( )
+	if not game.map.blocks[xl] then
+		game.map:newColumn( xl, "left" )
+	end
+	if not game.map.blocks[xr] then
+		game.map:newColumn( xr, "right" )
+	end
 	if love.keyboard.isDown( "d" ) then
-		game.entity:move( "add", .1, 0 )
-	elseif love.keyboard.isDown( "a" ) then
-		game.entity:move( "add", -.1, 0 )
+		game.player:applyVelocity( 0.2, 0 )
+	end
+	if love.keyboard.isDown( "a" ) then
+		game.player:applyVelocity( -0.2, 0 )
+	end
+	game.player:applyVelocity( 0, game.gravity )
+	game.player:update( "x" )
+	if game.player:isCollidingWithMap( game.map ) then
+		game.player:moveBack( )
+	end
+	game.player:update( "y" )
+	if game.player:isCollidingWithMap( game.map ) then
+		game.player:moveBack( )
 	end
 end
 
 function love.keypressed( key, uni )
-	-- keyboard press
+	if key == " " then
+		game.player:applyVelocity( 0, -30 )
+	end
 end
 
 function love.mousepressed( x, y, button )
@@ -43,6 +66,6 @@ function love.mousepressed( x, y, button )
 end
 
 function love.draw( )
-	love.graphics.print( game.camera.x..", "..game.camera.y, 1, 1 )
 	game.camera:render( game.map )
+	love.graphics.print( game.camera.x..", "..game.camera.y, 1, 1 )
 end

@@ -32,3 +32,7 @@ game.split = function( str, pat )
 	end
 	return parts
 end
+
+math.round = function( n )
+	return math.floor( n + 0.5 )
+end
