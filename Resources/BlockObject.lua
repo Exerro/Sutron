@@ -1,25 +1,4 @@
 
-game.blocks = {
-	["Air"] = {
-		solid = false;
-		transparent = true;
-		render = function( self, x, y )
-			if self.position.y > game.seaLevel then
-				love.graphics.draw( game.imageData.Blocks.Air.belowGround.image, x, y )
-			else
-				love.graphics.draw( game.imageData.Blocks.Air.aboveGround.image, x, y )
-			end
-		end;
-		getCollisionMap = function( self )
-			if self.position.y > game.seaLevel then
-				return game.imageData.Blocks.Air.belowGround.collisionMap
-			else
-				return game.imageData.Blocks.Air.aboveGround.collisionMap
-			end
-		end;
-	};
-}
-
 game.blockUpdateMethods = {
 	["Flowing"] = function( self, map )
 		
@@ -29,29 +8,68 @@ game.blockUpdateMethods = {
 	end;
 }
 
+game.blocks = {
+	["Air"] = {
+		solid = false;
+		transparent = true;
+		render = function( self, x, y )
+			if self.position.y > game.seaLevel then
+				love.graphics.draw( game.data.Blocks.Air.belowGround.image, x, y )
+			else
+				love.graphics.draw( game.data.Blocks.Air.aboveGround.image, x, y )
+			end
+		end;
+	};
+	--[[
+	["Name"] = {
+		maxDamage = number that when is reached by the block damage value, makes the block break
+		transparent = set to true to make the block not render
+		solid = set to false to make the collision always return false ( so you can walk through it )
+		render = function called when it wants to render, called with self, x, y where self is the block object and x, y are screen coords
+		getCollisionMap = function that should return a 2d array of boolean values
+		update = function that will be called every game update
+	}
+	]]
+}
+
 game.newBlockObject = function( parent )
 	local t = { }
 	t.position = { x = 1, y = 1, w = 1, h = 1 }
 	t.parent = parent
 	t.type = "Air"
-	t.blockType = ""
-	t.image = false
+	t.majorType = "Block"
 	t.damage = 0
 	t.maxDamage = 1
 	t.transparent = false
 	t.solid = true -- collision
+	t.ci = false
 
 	t.render = function( self, x, y )
-		if game.imageData.Blocks[self.type] and not self.transparent then
+		if game.data.Blocks[self.type] and not self.transparent then
 			local x, y = x or self.position.x, y or self.position.y
-			love.graphics.draw( game.imageData.Blocks[self.type].Texture.image, x, y )
+			love.graphics.draw( game.data.Blocks[self.type].Texture.image, x, y )
 		end
 	end
-	t.getCollisionMap = function( self )
-		return game.imageData.Blocks[self.type].Texture.image
+	t.renderCollisionMap = function( self, x, y )
+		if not self.solid then return end
+		if not self.ci then
+			local idata = love.image.newImageData( game.blockSize, game.blockSize )
+			local map = self:getCollisionMap( )
+			for y = 1,#map do
+				for x = 1,#map[y] do
+					if map[y][x] then
+						idata:setPixel( x - 1, y - 1, 255, 0, 0, 255 )
+					else
+						idata:setPixel( x - 1, y - 1, 0, 0, 0, 0 )
+					end
+				end
+			end
+			self.ci = love.graphics.newImage( idata )
+		end
+		love.graphics.draw( self.ci, x, y )
 	end
-	t.update = function( self )
-		
+	t.getCollisionMap = function( self )
+		return game.data.Blocks[self.type].Texture.collisionMap
 	end
 	t.setType = function( self, type )
 		self.type = type
@@ -84,25 +102,8 @@ game.newBlockObject = function( parent )
 			self:onDestroy( )
 		end
 	end
-	t.isColliding = function( self, other )
-		if not self.solid then return false end
-		local x, y, w, h = other.x, other.y, other.w, other.h
-		local x2, y2, w2, h2 = self.position.x * game.blockSize, self.position.y * game.blockSize, game.blockSize, game.blockSize
-		local t, b
-		if y2 > y then
-			t, b = y2, y + h - 1
-		else
-			t, b = y, y2 + h2 - 1
-		end
-		if t > b then return false end
-		local l, r
-		if x2 > x then
-			r, l = x2, x + w - 1
-		else
-			r, l = x, x2 + w2 - 1
-		end
-		if l < r then return false end
-		return true
+	t.getRealXY = function( self )
+		return self.position.x * game.blockSize, self.position.y * game.blockSize
 	end
 	return t
 end

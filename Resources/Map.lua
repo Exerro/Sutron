@@ -10,12 +10,15 @@ game.blockCountX = math.ceil( love.graphics.getWidth( ) / game.blockSize )
 game.blockCountY = math.ceil( love.graphics.getHeight( ) / game.blockSize )
 
 game.map = { blocks = { }, entities = { } }
-game.map.newColumn = function( self, x )
-	self.blocks[x] = game.generation.generateColumn( self, x )
-	for y = 1,#self.blocks[x] do
+
+game.map.setBlock = function( self, x, y, block )
+	if type( block ) == "string" then
+		block = game.newBlock( block )
+	end
+	if self.blocks[x] and self.blocks[x][y] then
+		self.blocks[x][y] = { block = block }
 		self.blocks[x][y].block:setParent( self.blocks[x][y] )
 		self.blocks[x][y].block:move( x, y )
-		self.blocks[x][y].light = 0
 		self.blocks[x][y].x = x
 		self.blocks[x][y].y = y
 		self.blocks[x][y].move = function( self, x, y )
@@ -31,6 +34,14 @@ game.map.newColumn = function( self, x )
 			end
 			return false
 		end
+	end
+end
+
+game.map.newColumn = function( self, x )
+	self.blocks[x] = game.generation.generateColumn( self, x )
+	for y = 1,#self.blocks[x] do
+		game.map:setBlock( x, y, self.blocks[x][y].block )
+		self.blocks[x][y].light = 0
 	end
 end
 

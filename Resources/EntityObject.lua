@@ -15,10 +15,12 @@ game.newEntityObject = function( )
     t.link = false
 	t.friction = 0.95
 	t.tvel = 20
+	t.majorType = "Entity"
+	t.ci = false
     
     t.render = function( self )
 		if self.frames[self.frame] then
-			love.graphics.draw( self.frames[self.frame], self.x, self.y, 0, self.direction == "right" and -1 or 1 )
+			love.graphics.draw( self.frames[self.frame].image, self.x, self.y, 0, self.direction == "right" and -1 or 1 )
 		elseif #self.frames == 0 then
 			love.graphics.rectangle( "line", self.x, self.y, self.w, self.h )
 		end
@@ -27,12 +29,46 @@ game.newEntityObject = function( )
 			self.frame = 1
 		end
     end
+	
+	t.renderCollisionMap = function( self )
+		if not self.ci then
+			local idata = love.image.newImageData( self.w, self.h )
+			local map = self:getCollisionMap( )
+			for y = 1,#map do
+				for x = 1,#map[y] do
+					if map[y][x] then
+						idata:setPixel( x - 1, y - 1, 255, 255, 0, 255 )
+					else
+						idata:setPixel( x - 1, y - 1, 0, 0, 0, 0 )
+					end
+				end
+			end
+			self.ci = love.graphics.newImage( idata )
+		end
+		love.graphics.draw( self.ci, self.x, self.y )
+	end
+	
+	t.getCollisionMap = function( self )
+		if self.frames[self.frame] then
+			return self.frames[self.frame].collisionMap
+		end
+		if not self.collisionMap then
+			self.collisionMap = { }
+			for y = 1,self.h do
+				self.collisionMap[y] = { }
+				for x = 1,self.w do
+					self.collisionMap[y][x] = true
+				end
+			end
+		end
+		return self.collisionMap
+	end
     
     t.newFrame = function( self, frame )
         local image = type( frame ) == "string" and love.graphics.newImage( frame ) or frame
         table.insert( self.frames, image )
     end
-    
+
     t.setHealth = function( self, health )
     	self.health = health
     	if self.health <= 0 and self.onDeath then
@@ -103,7 +139,18 @@ game.newEntityObject = function( )
 	end
 	
 	t.isColliding = function( self, other )
-		
+		local ent = other
+		if other.majorType == "Block" then
+			if not other.solid then return false, "None" end
+			ent = { w = game.blockSize, h = game.blockSize }
+			ent.x, ent.y = other:getRealXY( )
+		end
+		local col, l, r, t, b = game.physics.collisionRR( self, ent )
+		if not col then return false, "None" end
+		local xo, yo = ent.x - self.x, ent.y - self.y
+		local col, x, y = game.physics.collisionMM( self:getCollisionMap( ), other:getCollisionMap( ), xo, yo )
+		if not col then return false, "Rectangle" end
+		return true
 	end
 	
 	t.isCollidingWithMap = function( self, map )
@@ -112,13 +159,19 @@ game.newEntityObject = function( )
 			if map.blocks[x] then
 				for y = selfy, selfy + math.ceil( self.h / game.blockSize ) do
 					if map.blocks[x][y] then
-						if map.blocks[x][y].block:isColliding( self ) then
+						if self:isColliding( map.blocks[x][y].block ) then
 							return true, map.blocks[x][y]
 						end
 					end
 				end
 			end
 		end
+		for i = 1,#map.entities do
+			if self ~= map.entities[i] and self:isColliding( map.entities[i] ) then
+				return true, map.entities[i]
+			end
+		end
+		return false
 	end
     return t
 end

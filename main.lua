@@ -5,10 +5,12 @@ game.mask = { }
 game.mask.image = { }
 game.mask.data = { }
 game.mask.data.collision = { }
+game.func = "render"
+game.renderdata = "Hi"
 
 -- require high level classes (Core classes)
 require "Resources/Utils"
-require "Resources/Mask"
+require "Resources/Physics"
 
 -- require low level classes (Game Classes)
 require "Resources/InterfaceObject"
@@ -27,6 +29,7 @@ function love.load( )
 	game.camera = game.newCameraObject( )
 	game.camera:linkTo( game.player )
 	table.insert( game.map.entities, game.player )
+	game.player:move( "set", 0, 3800 )
 end
 
 function love.update( dt )
@@ -51,6 +54,7 @@ function love.update( dt )
 	end
 	game.player:update( "y" )
 	if game.player:isCollidingWithMap( game.map ) then
+		game.player.yv = 0
 		game.player:moveBack( )
 	end
 end
@@ -58,14 +62,20 @@ end
 function love.keypressed( key, uni )
 	if key == " " then
 		game.player:applyVelocity( 0, -30 )
+	elseif key == "tab" then
+		game.func = game.func == "render" and "renderCollisionMap" or "render"
 	end
 end
 
 function love.mousepressed( x, y, button )
-	-- mouse press
+	local x, y = game.camera:getClickPosition( x, y )
+	game.map:setBlock( x, y, "Stair" )
+	game.renderdata = x..", "..y
 end
 
 function love.draw( )
-	game.camera:render( game.map )
+	game.camera[game.func]( game.camera, game.map )
 	love.graphics.print( game.camera.x..", "..game.camera.y, 1, 1 )
+	love.graphics.print( math.floor( game.camera.x / game.blockSize )..", "..math.floor( game.camera.y / game.blockSize ), 1, 21 )
+	love.graphics.print( game.renderdata, 1, 41 )
 end

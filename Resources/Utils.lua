@@ -36,3 +36,56 @@ end
 math.round = function( n )
 	return math.floor( n + 0.5 )
 end
+
+game.data = { }
+
+local function getFileName( file )
+	local path = game.split( file, "/" )
+	local filename = game.split( path[#path], "." )
+	if #filename > 1 then
+		table.remove( filename, #filename )
+	end
+	return table.concat( filename, "." )
+end
+
+local function getFilePath( file )
+	local name = game.split( file, "/" )
+	name = name[#name]
+	local parts = game.split( name, "." )
+	if #parts > 1 then
+		return parts[#parts]
+	end
+	return false
+end
+
+local loadPath
+loadPath = function( path, t )
+	local files = love.filesystem.enumerate( path )
+	for i = 1,#files do
+		if love.filesystem.isDirectory( path.."/"..files[i] ) then
+			t[files[i]] = { }
+			loadPath( path.."/"..files[i], t[files[i]] )
+		else
+			local ext = getFilePath( files[i] )
+			local name = getFileName( files[i] )
+			t[name] = { }
+			if ext == "png" then
+				t[name].image = love.graphics.newImage( path.."/"..files[i] )
+				t[name].collisionMap = { }
+				local imageData = love.image.newImageData( path.."/"..files[i] )
+	 
+				for y = 1, imageData:getHeight( ) do
+					t[name].collisionMap[y] = { }
+					for x = 1, imageData:getWidth( ) do
+						local pixel = { imageData:getPixel( x - 1, y - 1 ) }
+						t[name].collisionMap[y][x] = pixel[4] ~= 0
+					end
+				end
+			elseif ext == "txt" then
+				t[name].text = love.filesystem.lines( path.."/"..files[i] )
+			end
+		end
+	end
+end
+
+loadPath( "Resources/Data", game.data )
