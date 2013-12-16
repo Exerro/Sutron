@@ -41,3 +41,30 @@ game.physics.collisionMM = function( m1, m2, xo, yo, xs, ys, xl, yl )
 	return false
 end
 
+game.physics.collisionUp = function( amount, entity1, entity2 )
+	local e1x, e1y, e1w, e1h, e2x, e2y, e2w, e2h
+	if entity1.majorType == "Block" then
+		e1x, e1y = entity1:getRealXY( )
+		e1w, e1h = game.blockSize, game.blockSize
+	else
+		e1x, e1y = entity1.x, entity1.y
+		e1w, e1h = entity1.w, entity1.h
+	end
+	if entity2.majorType == "Block" then
+		e2x, e2y = entity2:getRealXY( )
+		e2w, e2h = game.blockSize, game.blockSize
+	else
+		e2x, e2y = entity2.x, entity2.y
+		e2w, e2h = entity2.w, entity2.h
+	end
+	e2y = e2y + amount
+	e1m = entity1:getCollisionMap( )
+	e2m = entity2:getCollisionMap( )
+	local col, l, r, t, b = game.physics.collisionRR( { x = e1x, y = e1y, w = e1w, h = e1h }, { x = e2x, y = e2y, w = e2w, h = e2h } )
+	if not col then return false, "None" end
+	local xo, yo = e2x - e1x, e2y - e1y
+	local col, x, y = game.physics.collisionMM( e1m, e2m, xo, yo )
+	if not col then return false, "Rectangle" end
+	return true, x, y
+end
+

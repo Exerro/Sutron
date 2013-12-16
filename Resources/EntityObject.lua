@@ -150,7 +150,7 @@ game.newEntityObject = function( )
 		local xo, yo = ent.x - self.x, ent.y - self.y
 		local col, x, y = game.physics.collisionMM( self:getCollisionMap( ), other:getCollisionMap( ), xo, yo )
 		if not col then return false, "Rectangle" end
-		return true
+		return true, x, y
 	end
 	
 	t.isCollidingWithMap = function( self, map )
@@ -160,7 +160,7 @@ game.newEntityObject = function( )
 				for y = selfy, selfy + math.ceil( self.h / game.blockSize ) do
 					if map.blocks[x][y] then
 						if self:isColliding( map.blocks[x][y].block ) then
-							return true, map.blocks[x][y]
+							return true, map.blocks[x][y].block
 						end
 					end
 				end

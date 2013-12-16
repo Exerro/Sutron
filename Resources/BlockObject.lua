@@ -20,6 +20,12 @@ game.blocks = {
 			end
 		end;
 	};
+	["Stair"] = {
+		render = function( self, x, y )
+			game.blocks.Air.render( self, x, y )
+			love.graphics.draw( game.data.Blocks.Stair.Texture.image, x, y )
+		end;
+	};
 	--[[
 	["Name"] = {
 		maxDamage = number that when is reached by the block damage value, makes the block break
