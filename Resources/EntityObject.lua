@@ -187,6 +187,9 @@ game.newEntityObject = function( )
 		if other.onCollision then
 			other:onCollision( self )
 		end
+		if self.onCollision then
+			self:onCollision( other )
+		end
 		return true, x, y
 	end
 	

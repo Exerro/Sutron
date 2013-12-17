@@ -42,21 +42,6 @@ game.blocks = {
 				love.graphics.draw( game.data.Blocks.Dirt.GrassTop.image, x, y + game.blockSize, math.pi * 1.5 )
 			end
 		end;
-		onDestroy = function( self, reason )
-			game.renderdata = "Broken: "..self.position.x * game.blockSize..", "..self.position.y * game.blockSize
-			if reason == "Break" then
-				local block = game.newEntityObject( )
-				block:resize( game.blockSize, game.blockSize )
-				block:move( "set", self.position.x * game.blockSize, self.position.y * game.blockSize )
-				block:newFrame( game.data.Blocks.Dirt.Texture )
-				block.onCollision = function( self, other )
-					if other == game.player then
-						self.removeFromMap = true
-					end
-				end
-				table.insert( game.map.entities, block )
-			end
-		end;
 	};
 	["Copper_Ore"] = {
 		render = function( self, x, y, map )
@@ -87,6 +72,11 @@ game.blocks = {
 				end
 			end
 		end;
+		blockUpdate = function( self, side, data )
+			if side == "down" and data == "Break" then
+				self.parent:destroy( )
+			end
+		end;
 		solid = false;
 	}
 	--[[
@@ -114,6 +104,22 @@ game.newBlockObject = function( parent )
 	t.xdirection = "left"
 	t.ydirection = "down"
 	t.ci = false
+	
+	t.onDestroy = function( self, reason )
+		game.renderdata = "Broken: "..self.position.x * game.blockSize..", "..self.position.y * game.blockSize
+		if reason == "Break" then
+			local block = game.newEntityObject( )
+			block:resize( game.blockSize, game.blockSize )
+			block:move( "set", self.position.x * game.blockSize, self.position.y * game.blockSize )
+			block:newFrame( game.data.Blocks.Crate.Texture )
+			block.onCollision = function( self, other )
+				if other == game.player then
+					self.removeFromMap = true
+				end
+			end
+			table.insert( game.map.entities, block )
+		end
+	end;
 
 	t.render = function( self, x, y )
 		if game.data.Blocks[self.type] and not self.transparent then

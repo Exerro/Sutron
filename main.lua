@@ -99,6 +99,11 @@ function love.load( )
 		love.graphics.print( math.floor( game.camera.x / game.blockSize )..", "..math.floor( game.camera.y / game.blockSize ), 1, 21 )
 		love.graphics.print( game.renderdata, 1, 61 )
 		love.graphics.print( love.timer.getFPS( ), 1, 41 )
+		local x, y = love.mouse.getPosition( )
+		local x = math.floor( ( x + game.camera.x ) / game.blockSize ) * game.blockSize - game.camera.x + 1
+		local y = math.floor( ( y + game.camera.y ) / game.blockSize ) * game.blockSize - game.camera.y - 3
+		love.graphics.setColor( 255, 255, 0, 30 )
+		love.graphics.rectangle( "fill", x, y, game.blockSize, game.blockSize )
 	end
 	
 	local c = game.states.running:newObject( "Button" )

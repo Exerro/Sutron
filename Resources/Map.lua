@@ -13,6 +13,17 @@ game.gravity = 0.15
 game.blockCountX = math.ceil( love.graphics.getWidth( ) / game.blockSize )
 game.blockCountY = math.ceil( love.graphics.getHeight( ) / game.blockSize )
 
+game.map.blockUpdate = function( x, y, data )
+	local sides = { { -1, 0, "right" }, { 1, 0, "left" }, { 0, -1, "down" }, { 0, 1, "up" } }
+	for i = 1,#sides do
+		if game.map.blocks[x+sides[i][1]] and game.map.blocks[x+sides[i][1]][y+sides[i][2]] then
+			if game.map.blocks[x+sides[i][1]][y+sides[i][2]].block.blockUpdate then
+				game.map.blocks[x+sides[i][1]][y+sides[i][2]].block:blockUpdate( sides[i][3], data )
+			end
+		end
+	end
+end
+
 game.map.setBlock = function( self, x, y, block )
 	if type( block ) == "string" then
 		block = game.newBlock( block )
@@ -43,6 +54,7 @@ game.map.setBlock = function( self, x, y, block )
 			self.block = game.newBlock( "Air" )
 			self.block:setParent( self )
 			self.block:move( self.x, self.y )
+			game.map.blockUpdate( self.x, self.y, "Break" )
 		end
 	end
 	return self.blocks[x][y]

@@ -11,7 +11,7 @@ local biomes = {
 		underground = "Stone:100,Copper_Ore:5"; -- block:probability
 	};
 	Something = {
-		cover = "Bamboo:2,Stone:3";
+		cover = "Bamboo:10,Stone:3";
 		mxh = 90; -- max height
 		mnh = 80; -- min height
 		mxg = 2; -- max gradient
