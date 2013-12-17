@@ -88,9 +88,10 @@ game.newCameraObject = function( )
 		return math.ceil( ( self.x + love.graphics.getWidth( ) / 2 ) / game.blockSize ) + 1
 	end
 	
-	t.getClickPosition = function( self, x, y )
-		local x, y = self.x + ( x - love.graphics.getWidth( ) / 2 ) + self.w / 2, self.y + ( y - love.graphics.getHeight( ) / 2 ) + self.h / 2
-		return math.floor( x / game.blockSize ), math.floor( y / game.blockSize )
+	t.getClickPosition = function( self, ox, oy )
+		local cx, cy = love.graphics.getWidth( ) / 2, love.graphics.getHeight( ) / 2
+		local x, y = self.x + ( ox - cx ) + self.w / 2, self.y + ( oy - cy ) + self.h / 2
+		return math.floor( x / game.blockSize ), math.floor( y / game.blockSize ), ox + self.w / 2 < cx and "right" or "left", oy + self.h / 2 < cy and "up" or "down"
 	end
 	
 	return t

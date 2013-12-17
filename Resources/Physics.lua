@@ -21,6 +21,11 @@ game.physics.collisionRR = function( r1, r2 )
 	return true, l, r, b, t
 end
 
+game.physics.collisionBERR = function( entity, blockx, blocky )
+	local b = { x = blockx * game.blockSize, y = blocky * game.blockSize, w = game.blockSize, h = game.blockSize }
+	return game.physics.collisionRR( entity, b )
+end
+
 game.physics.collisionPM = function( x, y, xo, yo, m )
 	return m[y-yo] and m[y-yo][x-xo]
 end
@@ -41,9 +46,10 @@ game.physics.collisionMM = function( m1, m2, xo, yo, xs, ys, xl, yl )
 	return false
 end
 
-game.physics.collisionUp = function( amount, entity1, entity2 )
+game.physics.collisionY = function( amount, entity1, entity2 )
 	local e1x, e1y, e1w, e1h, e2x, e2y, e2w, e2h
 	if entity1.majorType == "Block" then
+		if not entity1.solid then return false, "None" end
 		e1x, e1y = entity1:getRealXY( )
 		e1w, e1h = game.blockSize, game.blockSize
 	else
@@ -51,6 +57,7 @@ game.physics.collisionUp = function( amount, entity1, entity2 )
 		e1w, e1h = entity1.w, entity1.h
 	end
 	if entity2.majorType == "Block" then
+		if not entity2.solid then return false, "None" end
 		e2x, e2y = entity2:getRealXY( )
 		e2w, e2h = game.blockSize, game.blockSize
 	else

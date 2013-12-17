@@ -22,8 +22,11 @@ game.blocks = {
 	};
 	["Stair"] = {
 		render = function( self, x, y )
+			local x, y = x or self.position.x, y or self.position.y
 			game.blocks.Air.render( self, x, y )
-			love.graphics.draw( game.data.Blocks.Stair.Texture.image, x, y )
+			x = x + ( self.xdirection == "right" and game.blockSize or 0 )
+			y = y + ( self.ydirection == "up" and game.blockSize or 0 )
+			love.graphics.draw( game.data.Blocks.Stair.Texture.image, x, y, 0, self.xdirection == "right" and -1 or 1, self.ydirection == "up" and -1 or 1 )
 		end;
 	};
 	--[[
@@ -47,20 +50,24 @@ game.newBlockObject = function( parent )
 	t.damage = 0
 	t.maxDamage = 1
 	t.transparent = false
-	t.solid = true -- collision
+	t.solid = true
+	t.xdirection = "left"
+	t.ydirection = "down"
 	t.ci = false
 
 	t.render = function( self, x, y )
 		if game.data.Blocks[self.type] and not self.transparent then
 			local x, y = x or self.position.x, y or self.position.y
-			love.graphics.draw( game.data.Blocks[self.type].Texture.image, x, y )
+			x = x + ( self.xdirection == "right" and game.blockSize or 0 )
+			y = y + ( self.ydirection == "up" and game.blockSize or 0 )
+			love.graphics.draw( game.data.Blocks[self.type].Texture.image, x, y, 0, self.xdirection == "right" and -1 or 1, self.ydirection == "up" and -1 or 1 )
 		end
 	end
 	t.renderCollisionMap = function( self, x, y )
 		if not self.solid then return end
 		if not self.ci then
 			local idata = love.image.newImageData( game.blockSize, game.blockSize )
-			local map = self:getCollisionMap( )
+			local map = self:getCollisionMap( "left", "down" )
 			for y = 1,#map do
 				for x = 1,#map[y] do
 					if map[y][x] then
@@ -72,10 +79,16 @@ game.newBlockObject = function( parent )
 			end
 			self.ci = love.graphics.newImage( idata )
 		end
-		love.graphics.draw( self.ci, x, y )
+		local x, y = x or self.position.x, y or self.position.y
+		x = x + ( self.xdirection == "right" and game.blockSize or 0 )
+		y = y + ( self.ydirection == "up" and game.blockSize or 0 )
+		love.graphics.draw( self.ci, x, y, 0, self.xdirection == "right" and -1 or 1, self.ydirection == "up" and -1 or 1 )
 	end
-	t.getCollisionMap = function( self )
-		return game.data.Blocks[self.type].Texture.collisionMap
+	t.getCollisionMap = function( self, x, y )
+		if not game.data.Blocks[self.type].Texture then
+			error( "Could not find texture for "..self.type )
+		end
+		return game.data.Blocks[self.type].Texture.collisionMap[x or self.xdirection][y or self.ydirection]
 	end
 	t.setType = function( self, type )
 		self.type = type

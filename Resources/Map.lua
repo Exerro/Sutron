@@ -23,8 +23,8 @@ game.map.setBlock = function( self, x, y, block )
 		self.blocks[x][y].y = y
 		self.blocks[x][y].move = function( self, x, y )
 			if x == self.x and y == self.y then return end
-			if game.map.blocks[x] and game.map.blocks[x][y] and game.map.blocks[x][y].onDestroy then
-				game.map.blocks[x][y]:onDestroy( "Replace" )
+			if game.map.blocks[x] and game.map.blocks[x][y] and game.map.blocks[x][y].block.onDestroy then
+				game.map.blocks[x][y].block:onDestroy( "Replace" )
 			end
 			if game.map[x] and game.map[x][y] then
 				game.map.blocks[x][y] = game.map.blocks[self.x][self.y]
@@ -34,6 +34,21 @@ game.map.setBlock = function( self, x, y, block )
 			end
 			return false
 		end
+		self.blocks[x][y].destroy = function( self )
+			if self.block.onDestroy then
+				self.block:onDestroy( "Break" )
+			end
+			self.block = game.newBlock( "Air" )
+			self.block:setParent( self )
+			self.block:move( self.x, self.y )
+		end
+	end
+	return self.blocks[x][y]
+end
+
+game.map.breakBlock = function( self, x, y )
+	if self.blocks[x] and self.blocks[x][y] then
+		self.blocks[x][y]:destroy( )
 	end
 end
 

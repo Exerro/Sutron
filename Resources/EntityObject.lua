@@ -4,7 +4,8 @@ game.newEntityObject = function( )
     t.x, t.y = 1, 1
     t.ox, t.oy = 1, 1
     t.xv, t.yv = 0, 0
-    t.direction = "left"
+    t.xdirection = "right"
+	t.ydirection = "down"
     t.w, t.h = 1, 1
     t.frames = { }
     t.frame = 1
@@ -13,14 +14,15 @@ game.newEntityObject = function( )
     t.inventory = game.newInventoryObject( )
     t.alive = true
     t.link = false
-	t.friction = 0.95
+	t.xfriction = 0.95
+	t.yfriction = 0.96
 	t.tvel = 20
 	t.majorType = "Entity"
-	t.ci = false
-    
+	t.ci = { [1] = { left = { }, right = { } } }
+
     t.render = function( self )
 		if self.frames[self.frame] then
-			love.graphics.draw( self.frames[self.frame].image, self.x, self.y, 0, self.direction == "right" and -1 or 1 )
+			love.graphics.draw( self.frames[self.frame].image, self.x, self.y, 0, self.xdirection == "left" and -1 or 1, self.ydirection == "up" and -1 or 1 )
 		elseif #self.frames == 0 then
 			love.graphics.rectangle( "line", self.x, self.y, self.w, self.h )
 		end
@@ -31,7 +33,7 @@ game.newEntityObject = function( )
     end
 	
 	t.renderCollisionMap = function( self )
-		if not self.ci then
+		if not self.ci[self.frame] or not self.ci[self.frame][self.xdirection][self.ydirection] then
 			local idata = love.image.newImageData( self.w, self.h )
 			local map = self:getCollisionMap( )
 			for y = 1,#map do
@@ -43,14 +45,14 @@ game.newEntityObject = function( )
 					end
 				end
 			end
-			self.ci = love.graphics.newImage( idata )
+			self.ci[self.frame][self.xdirection][self.ydirection] = love.graphics.newImage( idata )
 		end
-		love.graphics.draw( self.ci, self.x, self.y )
+		love.graphics.draw( self.ci[self.frame][self.xdirection][self.ydirection], self.x, self.y, 0, self.xdirection == "left" and -1 or 1, self.ydirection == "up" and -1 or 1 )
 	end
 	
 	t.getCollisionMap = function( self )
 		if self.frames[self.frame] then
-			return self.frames[self.frame].collisionMap
+			return self.frames[self.frame].collisionMap[self.xdirection][self.ydirection]
 		end
 		if not self.collisionMap then
 			self.collisionMap = { }
@@ -66,6 +68,7 @@ game.newEntityObject = function( )
     
     t.newFrame = function( self, frame )
         local image = type( frame ) == "string" and love.graphics.newImage( frame ) or frame
+		self.ci[#self.frames] = { left = { }, right = { } }
         table.insert( self.frames, image )
     end
 
@@ -118,8 +121,8 @@ game.newEntityObject = function( )
     end
 	
 	t.updateVelocity = function( self )
-		self.xv = self.xv * self.friction
-		self.yv = self.yv * self.friction
+		self.xv = self.xv * self.xfriction
+		self.yv = self.yv * self.yfriction
 	end
     
     t.update = function( self, mode )
@@ -146,9 +149,15 @@ game.newEntityObject = function( )
 			ent.x, ent.y = other:getRealXY( )
 		end
 		local col, l, r, t, b = game.physics.collisionRR( self, ent )
+		-- left entities right side, right entities left side
 		if not col then return false, "None" end
 		local xo, yo = ent.x - self.x, ent.y - self.y
-		local col, x, y = game.physics.collisionMM( self:getCollisionMap( ), other:getCollisionMap( ), xo, yo )
+		local xs, ys, xl, yl
+		xs = math.max( 1, ent.x - self.x )
+		ys = math.max( 1, ent.y - self.y )
+		xl = math.min( self.w, ( ent.x + ent.w - 1 ) - self.x )
+		yl = math.min( self.h, ( ent.y + ent.h - 1 ) - self.y )
+		local col, x, y = game.physics.collisionMM( self:getCollisionMap( ), other:getCollisionMap( ), xo, yo, xs, ys, xl, yl )
 		if not col then return false, "Rectangle" end
 		return true, x, y
 	end

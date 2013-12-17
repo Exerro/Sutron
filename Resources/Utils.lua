@@ -71,14 +71,30 @@ loadPath = function( path, t )
 			t[name] = { }
 			if ext == "png" then
 				t[name].image = love.graphics.newImage( path.."/"..files[i] )
-				t[name].collisionMap = { }
+				t[name].collisionMap = { left = { down = { }, up = { } }, right = { down = { }, up = { } } }
 				local imageData = love.image.newImageData( path.."/"..files[i] )
 	 
 				for y = 1, imageData:getHeight( ) do
-					t[name].collisionMap[y] = { }
+					t[name].collisionMap.left.down[y] = { }
 					for x = 1, imageData:getWidth( ) do
 						local pixel = { imageData:getPixel( x - 1, y - 1 ) }
-						t[name].collisionMap[y][x] = pixel[4] ~= 0
+						t[name].collisionMap.left.down[y][x] = pixel[4] ~= 0
+					end
+				end
+				
+				for y = 1,#t[name].collisionMap.left.down do
+					t[name].collisionMap.right.down[y] = { }
+					for x = 1,#t[name].collisionMap.left.down[y] do
+						t[name].collisionMap.right.down[y][x] = t[name].collisionMap.left.down[y][#t[name].collisionMap.left.down[1] - x + 1]
+					end
+				end
+				
+				for k, v in pairs( t[name].collisionMap ) do
+					for y = 1,#v.down do
+						v.up[y] = { }
+						for x = 1,#v.down[y] do
+							v.up[y][x] = v.down[#v.down - y + 1][x]
+						end
 					end
 				end
 			elseif ext == "txt" then
