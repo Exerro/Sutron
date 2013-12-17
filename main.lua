@@ -119,6 +119,10 @@ function love.load( )
 		end
 	end
 	c.render = function( ) end
+	
+	local random = game.states.running:newObject( "Button" )
+	random:move( "set", 200, 200 )
+	random:resize( "set", 100, 50 )
 end
 
 function love.update( dt )
