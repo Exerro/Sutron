@@ -38,7 +38,8 @@ game.newCameraObject = function( )
 		for x = math.floor( self.x / game.blockSize - w/2 ), math.ceil( self.x / game.blockSize + w/2 ) + 2 do
 			for y = math.floor( self.y / game.blockSize - h/2 ), math.ceil( self.y / game.blockSize + h/2 ) + 2 do
 				if map.blocks[x] and map.blocks[x][y] then
-					map.blocks[x][y].block:render( map.blocks[x][y].block:getRealXY( ) )
+					local rx, ry = map.blocks[x][y].block:getRealXY( )
+					map.blocks[x][y].block:render( rx, ry, map )
 				end
 			end
 		end

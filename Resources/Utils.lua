@@ -68,37 +68,42 @@ loadPath = function( path, t )
 		else
 			local ext = getFilePath( files[i] )
 			local name = getFileName( files[i] )
-			t[name] = { }
+			t[name] = t[name] or { }
 			if ext == "png" then
 				t[name].image = love.graphics.newImage( path.."/"..files[i] )
-				t[name].collisionMap = { left = { down = { }, up = { } }, right = { down = { }, up = { } } }
 				local imageData = love.image.newImageData( path.."/"..files[i] )
-	 
-				for y = 1, imageData:getHeight( ) do
-					t[name].collisionMap.left.down[y] = { }
-					for x = 1, imageData:getWidth( ) do
-						local pixel = { imageData:getPixel( x - 1, y - 1 ) }
-						t[name].collisionMap.left.down[y][x] = pixel[4] ~= 0
+			elseif ext == "txt" then
+				t[name].text = love.filesystem.lines( path.."/"..files[i] )
+			end
+			if ext == "scm" or ext == "png" then
+				local imageData = love.image.newImageData( path.."/"..files[i] )
+
+				if not t[name].collisionMap or ext == "scm" then
+					t[name].collisionMap = { left = { down = { }, up = { } }, right = { down = { }, up = { } } }
+					for y = 1, imageData:getHeight( ) do
+						t[name].collisionMap.left.down[y] = { }
+						for x = 1, imageData:getWidth( ) do
+							local pixel = { imageData:getPixel( x - 1, y - 1 ) }
+							t[name].collisionMap.left.down[y][x] = pixel[4] ~= 0
+						end
 					end
-				end
-				
-				for y = 1,#t[name].collisionMap.left.down do
-					t[name].collisionMap.right.down[y] = { }
-					for x = 1,#t[name].collisionMap.left.down[y] do
-						t[name].collisionMap.right.down[y][x] = t[name].collisionMap.left.down[y][#t[name].collisionMap.left.down[1] - x + 1]
+					
+					for y = 1,#t[name].collisionMap.left.down do
+						t[name].collisionMap.right.down[y] = { }
+						for x = 1,#t[name].collisionMap.left.down[y] do
+							t[name].collisionMap.right.down[y][x] = t[name].collisionMap.left.down[y][#t[name].collisionMap.left.down[1] - x + 1]
+						end
 					end
-				end
-				
-				for k, v in pairs( t[name].collisionMap ) do
-					for y = 1,#v.down do
-						v.up[y] = { }
-						for x = 1,#v.down[y] do
-							v.up[y][x] = v.down[#v.down - y + 1][x]
+					
+					for k, v in pairs( t[name].collisionMap ) do
+						for y = 1,#v.down do
+							v.up[y] = { }
+							for x = 1,#v.down[y] do
+								v.up[y][x] = v.down[#v.down - y + 1][x]
+							end
 						end
 					end
 				end
-			elseif ext == "txt" then
-				t[name].text = love.filesystem.lines( path.."/"..files[i] )
 			end
 		end
 	end

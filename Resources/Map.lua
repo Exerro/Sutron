@@ -1,15 +1,17 @@
 
+game.map = { blocks = { }, entities = { } }
+game.map.seed = 2
+game.map.newBiomeChance = 10
+
 require "Resources/Generation"
 
 game.blockSize = 32
 game.mapHeight = 256
 game.seaLevel = 128
-game.gravity = 0.3
+game.gravity = 0.15
 
 game.blockCountX = math.ceil( love.graphics.getWidth( ) / game.blockSize )
 game.blockCountY = math.ceil( love.graphics.getHeight( ) / game.blockSize )
-
-game.map = { blocks = { }, entities = { } }
 
 game.map.setBlock = function( self, x, y, block )
 	if type( block ) == "string" then
@@ -52,8 +54,10 @@ game.map.breakBlock = function( self, x, y )
 	end
 end
 
-game.map.newColumn = function( self, x )
-	self.blocks[x] = game.generation.generateColumn( self, x )
+game.map.newColumn = function( self, dir )
+	if not game.generation[dir] then error( dir ) end
+	local x = game.generation[dir].x
+	self.blocks[x] = game.generation.generateColumn( self, dir )
 	for y = 1,#self.blocks[x] do
 		game.map:setBlock( x, y, self.blocks[x][y].block )
 		self.blocks[x][y].light = 0
@@ -61,9 +65,8 @@ game.map.newColumn = function( self, x )
 end
 
 for i = 1,math.ceil( game.blockCountX / 2 ) do
-	game.map:newColumn( 0, "right" )
-	game.map:newColumn( i, "right" )
-	game.map:newColumn( -i, "left" )
+	game.map:newColumn( "right" )
+	game.map:newColumn( "left" )
 end
 
 -- lighting will be done in the map, i.e map[y][x].lighting

@@ -29,6 +29,66 @@ game.blocks = {
 			love.graphics.draw( game.data.Blocks.Stair.Texture.image, x, y, 0, self.xdirection == "right" and -1 or 1, self.ydirection == "up" and -1 or 1 )
 		end;
 	};
+	["Dirt"] = {
+		render = function( self, x, y, map )
+			love.graphics.draw( game.data.Blocks.Dirt.Texture.image, x, y )
+			if map.blocks[self.position.x][self.position.y-1] and map.blocks[self.position.x][self.position.y-1].block.transparent then
+				love.graphics.draw( game.data.Blocks.Dirt.GrassTop.image, x, y )
+			end
+			if map.blocks[self.position.x+1] and map.blocks[self.position.x+1][self.position.y].block.transparent then
+				love.graphics.draw( game.data.Blocks.Dirt.GrassTop.image, x + game.blockSize, y, math.pi * 0.5 )
+			end
+			if map.blocks[self.position.x-1] and map.blocks[self.position.x-1][self.position.y].block.transparent then
+				love.graphics.draw( game.data.Blocks.Dirt.GrassTop.image, x, y + game.blockSize, math.pi * 1.5 )
+			end
+		end;
+		onDestroy = function( self, reason )
+			game.renderdata = "Broken: "..self.position.x * game.blockSize..", "..self.position.y * game.blockSize
+			if reason == "Break" then
+				local block = game.newEntityObject( )
+				block:resize( game.blockSize, game.blockSize )
+				block:move( "set", self.position.x * game.blockSize, self.position.y * game.blockSize )
+				block:newFrame( game.data.Blocks.Dirt.Texture )
+				block.onCollision = function( self, other )
+					if other == game.player then
+						self.removeFromMap = true
+					end
+				end
+				table.insert( game.map.entities, block )
+			end
+		end;
+	};
+	["Copper_Ore"] = {
+		render = function( self, x, y, map )
+			love.graphics.draw( game.data.Blocks["Stone"].Texture.image, x, y )
+			love.graphics.draw( game.data.Blocks["Copper_Ore"].Texture.image, x, y )
+		end;
+		getCollisionMap = function( self )
+			return game.data.Blocks.Stone.Texture.collisionMap.left.down
+		end;
+	};
+	["Bamboo"] = {
+		frame = 1;
+		frames = { };
+		load = function( self )
+			for i = 1,5 do
+				table.insert( self.frames, game.data.Blocks.Bamboo[tostring( i )] )
+			end
+		end;
+		lastRenderTime = 0;
+		render = function( self, x, y )
+			game.blocks.Air.render( self, x, y )
+			love.graphics.draw( self.frames[self.frame].image, x, y )
+			if love.timer.getTime( ) - self.lastRenderTime > 0.5 then
+				self.lastRenderTime = love.timer.getTime( )
+				self.frame = self.frame + 1
+				if self.frame > #self.frames then
+					self.frame = 1
+				end
+			end
+		end;
+		solid = false;
+	}
 	--[[
 	["Name"] = {
 		maxDamage = number that when is reached by the block damage value, makes the block break
@@ -96,6 +156,9 @@ game.newBlockObject = function( parent )
 			for k, v in pairs( game.blocks[type] ) do
 				self[k] = v
 			end
+		end
+		if self.load then
+			self:load( )
 		end
 	end
 	t.setParent = function( self, parent )

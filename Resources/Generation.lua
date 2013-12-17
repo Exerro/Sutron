@@ -1,56 +1,206 @@
-game.generation = { 
-	left = {
-		biome = "Plains";
+
+local biomes = { 
+	Plains = {
+		cover = "Dirt:3,Stone:1";
+		mxh = 100; -- max height
+		mnh = 95; -- min height
+		mxg = 1; -- max gradient
+		mng = 0; -- min gradient
+		mxd = 30; -- max distance
+		mnd = 10; -- min distance
+		underground = "Stone:100,Copper_Ore:5"; -- block:probability
 	};
-	right = {
-		biome = "Plains";
+	Something = {
+		cover = "Bamboo:2,Stone:3";
+		mxh = 90; -- max height
+		mnh = 80; -- min height
+		mxg = 2; -- max gradient
+		mng = 0; -- min gradient
+		mxd = 30; -- max distance
+		mnd = 10; -- min distance
+		underground = "Stone:1"; -- block:probability
 	};
 }
 
-game.generation.generateColumn = function( map, x )
-	local column = { }
-	for y = 1,game.mapHeight do
-		column[y] = { }
-		if y < game.seaLevel then
-			column[y].block = game.newBlock( "Air" )
-		else
-			column[y].block = game.newBlock( "Stone" )
+loadBiome = function( t )
+	if not t.cover then
+		t.cover = { "Dirt" }
+	else
+		local cover = game.split( t.cover, "," )
+		for i = 1,#cover do
+			cover[i] = game.split( cover[i], ":" )
+			cover[i][2] = tonumber( cover[i][2] )
+		end
+		t.cover = { }
+		for i = 1,#cover do
+			for k = 1,cover[i][2] do
+				table.insert( t.cover, cover[i][1] )
+			end
 		end
 	end
+	if not t.underground then
+		t.underground = { max = 1, [1] = "Stone" }
+	else
+		local under = game.split( t.underground, "," )
+		for i = 1,#under do
+			under[i] = game.split( under[i], ":" )
+			under[i][2] = tonumber( under[i][2] )
+		end
+		t.underground = { max = 0 }
+		for i = 1,#under do
+			for k = 1,under[i][2] do
+				t.underground.max = t.underground.max + 1
+				t.underground[t.underground.max] = under[i][1]
+			end
+		end
+	end
+	return t
+end
+
+for k, v in pairs( biomes ) do
+	biomes[k] = loadBiome( v )
+end
+
+game.generation = { 
+	newBiome = function( t )
+		table.insert( biomes, loadBiome( t ) )
+	end;
+	getRandomSeed = function( x )
+		return x
+	end;
+	setRandomSeed = function( x )
+		-- math.randomseed( game.generation.getRandomSeed( x ) )
+	end;
+	selection = {
+		changeBiome = function( dir )
+			game.generation.setRandomSeed( game.generation[dir].x )
+			local biome = biomes[game.generation[dir].biome]
+			local n = 6
+			if game.generation[dir].distance > biome.mnd then
+				local n = math.random( 1, game.map.newBiomeChance )
+			end
+			if n <= 5 or game.generation[dir].distance >= biome.mxd then
+				return true
+			end
+			return false
+		end;
+		biome = function( dir )
+			game.generation.setRandomSeed( game.generation[dir].x )
+			local count = 0
+			local bs = { }
+			for k, v in pairs( biomes ) do
+				count = count + 1
+				bs[count] = k
+			end
+			return bs[math.random( 1, count )]
+		end;
+		ore = function( dir )
+			game.generation.setRandomSeed( game.generation[dir].x )
+			local biome = biomes[game.generation[dir].biome]
+			local n = math.random( 1, biome.underground.max )
+			return biome.underground[n]
+		end;
+		height = function( dir )
+			game.generation.setRandomSeed( game.generation[dir].x )
+			local biome = biomes[game.generation[dir].biome]
+			local height = math.random( biome.mnh, biome.mxh )
+			return height
+		end;
+		heightChange = function( dir )
+			game.generation.setRandomSeed( game.generation[dir].x )
+			local biome = biomes[game.generation[dir].biome]
+			local n = math.random( biome.mng, biome.mxg )
+			if game.generation[dir].height > game.generation[dir].toheight then
+				return game.generation[dir].height - n
+			else
+				return game.generation[dir].height + n
+			end
+		end;
+	};
+	fill = function( t, s, l, n )
+		for i = s, l do
+			t[i] = { block = type( n ) == "string" and game.newBlock( n ) or game.newBlock( n.type ) }
+		end
+	end;
+	surfaceFill = function( dir, t )
+		local biome = biomes[game.generation[dir].biome]
+		local height = game.generation[dir].height
+		for h = height, height + #biome.cover - 1 do
+			local b = biome.cover[h - height + 1]
+			t[h] = { block = game.newBlock( b ) }
+		end
+		return height + #biome.cover
+	end;
+	left = {
+		x = 0;
+		biome = "Plains";
+		tobiome = "Plains";
+		changing = false;
+		height = 100;
+		toheight = 100;
+		distance = 0;
+		data = { };
+	};
+	right = {
+		x = 1;
+		biome = "Plains";
+		tobiome = "Plains";
+		changing = false;
+		height = 100;
+		toheight = 100;
+		distance = 0;
+		data = { };
+	};
+}
+
+game.generation.generateColumn = function( map, dir )
+	local column = { }
+	column.maxAir = 0
+	column.biome = game.generation[dir].biome
+	for y = 1,game.mapHeight do
+		column[y] = { }
+	end
+	local nh = game.generation.surfaceFill( dir, column )
+	for y = nh, game.mapHeight do
+		column[y].block = game.generation.selection.ore( dir )
+	end
+	local found = true
+	for y = 1,game.mapHeight do
+		if not column[y].block then
+			column[y].block = game.newBlock( "Air" )
+			if found then
+				column.maxAir = y
+			end
+		else
+			found = false
+		end
+	end
+	if game.generation[dir].height == game.generation[dir].toheight then
+		game.generation[dir].toheight = game.generation.selection.height( dir )
+	else
+		game.generation[dir].height = game.generation.selection.heightChange( dir )
+	end
+	game.generation[dir].x = game.generation[dir].x + ( dir == "left" and -1 or 1 )
+	if game.generation.selection.changeBiome( dir ) then
+		game.generation[dir].changing = true
+		if game.generation[dir].height < biomes[game.generation[dir].tobiome].mnh or game.generation[dir].height > biomes[game.generation[dir].tobiome].mxh then
+			game.generation[dir].toheight = game.generation[dir].height < biomes[game.generation[dir].tobiome].mnh and biomes[game.generation[dir].tobiome].mnh or biomes[game.generation[dir].tobiome].mxh
+		else
+			
+		end
+	end
+	if game.generation[dir].changing and not ( game.generation[dir].height < biomes[game.generation[dir].tobiome].mnh or game.generation[dir].height > biomes[game.generation[dir].tobiome].mxh ) then
+		game.generation[dir].biome = game.generation[dir].tobiome
+		game.generation[dir].tobiome = game.generation.selection.biome( dir )
+		game.generation[dir].distance = 0
+		game.generation[dir].changing = false
+	end
+	game.generation[dir].distance = game.generation[dir].distance + 1
 	return column
 end
 
 --[[
 
-local random = function( m, ma, seed )
-	--math.randomseed( seed or map.seed )
-	return math.random( m, ma )
-end
-
-map.seed = map.seed or os.time( )
-generation = {
-	l = {
-		biome = "plains";
-		tobiome = "plains";
-		changing = false;
-		data = { h = 100, th = random( 95, 100 ), distance = 0, lasttree = 1, dist = { }; };
-	};
-	r = {
-		biome = "plains";
-		tobiome = "plains";
-		changing = false;
-		data = { h = 100, th = random( 95, 100 ), distance = 0, lasttree = 1, dist = { }; };
-	};
-	biomes = {
-		hills = {
-			cover = { 3, 3, 3 };
-			mxh = 80;
-			mnh = 60;
-			gradient = 3;
-			ores = { };
-			surface = { { id = 31, mxh = map.height, mnh = 1, dist = 3 } };
-			length = 40;
-		};
 		mountain = {
 			cover = { 3, 3, 3 };
 			mxh = 80;
@@ -107,31 +257,10 @@ generation = {
 		};
 	};
 }
+]]
 
-generation.selBiome = function( )
-	local count = 0
-	for k, v in pairs( generation.biomes ) do
-		count = count + 1
-	end
-	local n = random( 1, count )
-	local count = 0
-	for k, v in pairs( generation.biomes ) do
-		count = count + 1
-		if count == n then
-			return k
-		end
-	end
-end
+--[[
 
-local ores = {
-    [1] = { id = 50, min = 60, max = map.height }; -- Coal ore
-	[2] = { id = 51, min = map.sealevel, max = map.height }; -- Iron ore
-	[3] = { id = 52, min = map.sealevel * 2.75, max = map.height }; -- Uranium ore
-	[4] = { id = 53, min = map.sealevel, max = map.height }; -- Copper ore
-	[5] = { id = 54, min = map.sealevel * 2.75, max = map.height }; -- Diamond ore
-	[6] = { id = 55, min = map.sealevel * 2, max = map.height }; -- Tin ore
-	[7] = { id = 7, min = 1, max = map.sealevel }; -- Marble
-}
 generation.getUndergroundBlock = function( height, biome )
 	local matches = { }
 	for i = 1,#ores do
