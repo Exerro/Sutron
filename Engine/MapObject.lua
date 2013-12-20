@@ -308,7 +308,7 @@ game.newMapObject = function( )
 			b:setType( block )
 			block = b
 		end
-		self.blocks[x][y] = { block = block, x = x, y = y }
+		self.blocks[x][y] = { block = block, x = x, y = y, light = 0, lighting = { } }
 		self.blocks[x][y].block:setParent( self.blocks[x][y] )
 		self.blocks[x][y].block.map = self
 		self.blocks[x][y].destroy = function( self )
@@ -320,10 +320,16 @@ game.newMapObject = function( )
 				self.block.map:blockUpdate( self.x, self.y, "Break" )
 			end
 		end
+		if self.blocks[x][y].block.lightSource then
+			self:applyLighting( x, y, self.blocks[x][y].block.lightSource )
+		end
 		return true
 	end
 	map.rawBreak = function( self, x, y )
 		if self.blocks[x] and self.blocks[x][y] then
+			if self.blocks[x][y].block.lightSource then
+				self:removeLighting( x, y )
+			end
 			self.blocks[x][y]:destroy( )
 		end
 	end
@@ -337,6 +343,59 @@ game.newMapObject = function( )
 			self.blocks[x][y].block:addDamage( damage or 1 )
 		end
 	end;
+	
+	map.updateLargestLighting = function( self, x, y )
+		if not self.blocks[x][y] then return false end
+		self.blocks[x][y].light = 0
+		for i = 1,#self.blocks[x][y].lighting do
+			if self.blocks[x][y].lighting[i].level > self.blocks[x][y].light then
+				self.blocks[x][y].light = self.blocks[x][y].lighting[i].level
+			end
+		end
+	end
+	map.applyColumnLighting = function( self, x, y, cx, light )
+		if not self.blocks[cx] then return end
+		local l = light.level
+		local r = light.radius
+		for y = math.max( y - r, 1 ), math.min( y + r, self.height ) do
+			local dx = x - cx
+			local dy = y - y
+			local dist = math.sqrt( dx ^ 2 + dy ^ 2 )
+			local level = math.floor( l - ( dist / r ) * l )
+			if level > 10 then level = 10 end
+			if level < 0 then level = 0 end
+			table.insert( self.blocks[cx][y].lighting, { level = level, light = light } )
+			if self.blocks[cx][y].light < level then
+				self.blocks[cx][y].light = level
+			end
+		end
+	end
+	map.removeColumnLighting = function( self, x, y, cx, light )
+		if not self.blocks[cx] then return end
+		for y = math.max( y - light.radius, 1 ), math.min( y + light.radius, self.height ) do
+			if self.blocks[cx][y] then
+				for i = #self.blocks[cx][y].lighting, 1, -1 do
+					if self.blocks[cx][y].lighting[i].light == light then
+						table.remove( self.blocks[cx][y].lighting, i )
+					end
+				end
+				self:updateLargestLighting( cx, y )
+			end
+		end
+	end
+	map.applyLighting = function( self, x, y, light )
+		local light = light or self.blocks[x][y].block.lightSource
+		for xx = x - light.radius, x + light.radius do
+			self:applyColumnLighting( x, y, xx, light )
+		end
+	end
+	map.removeLighting = function( self, x, y )
+		if not self.blocks[x] or not self.blocks[x][y] then return end
+		local light = self.blocks[x][y].block.lightSource
+		for xx = x - light.radius, x + light.radius do
+			self:removeColumnLighting( x, y, xx, light )
+		end
+	end
 	
 	map.newEntity = function( self, ent )
 		table.insert( self.entities, ent )

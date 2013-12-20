@@ -96,6 +96,7 @@ game.newBlockObject = function( parent )
 	t.xdirection = "left"
 	t.ydirection = "down"
 	t.ci = false
+	t.lightSource = false
 
 	t.onDestroy = function( self, reason )
 		game.renderdata = "Broken: "..self.parent.x * self.map.blockSize..", "..self.parent.y * self.map.blockSize

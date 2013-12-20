@@ -40,6 +40,8 @@ game.newCameraObject = function( )
 		for x = math.floor( self.x / self.map.blockSize - w/2 ), math.ceil( self.x / self.map.blockSize + w/2 ) + 2 do
 			for y = math.floor( self.y / self.map.blockSize - h/2 ), math.ceil( self.y / self.map.blockSize + h/2 ) + 2 do
 				if map.blocks[x] and map.blocks[x][y] then
+					local lightlevel = map.blocks[x][y].light
+					love.graphics.setColor( lightlevel * 17, lightlevel * 17, lightlevel * 17 )
 					local rx, ry = map.blocks[x][y].block:getRealXY( )
 					map.blocks[x][y].block:render( rx, ry, map )
 					local damage = math.floor( ( map.blocks[x][y].block.damage / map.blocks[x][y].block.maxDamage ) * #game.data["Breaking Animation"] )
@@ -54,6 +56,7 @@ game.newCameraObject = function( )
 			map.entities[i]:render( )
 		end
 		love.graphics.translate( xo, yo )
+		love.graphics.setColor( 255, 255, 255 )
 		-- love.graphics.setCanvas( )
 		-- love.graphics.draw( canvas )
 	end
