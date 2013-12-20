@@ -1,13 +1,13 @@
 
 game = { }
-game.w = 720
-game.h = 540
-game.title = "Hello World"
+game.w = 1080
+game.h = 720
+game.title = "Sutron Development Release"
 game.window = { }
 
 function love.conf( t )
-	t.screen.w = game.w
-	t.screen.h = game.h
+	t.screen.width = game.w
+	t.screen.height = game.h
 	t.title = game.title
 	game.window = t
 end
