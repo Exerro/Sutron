@@ -24,7 +24,7 @@ game.newCameraObject = function( )
 		end
 	end
 
-	t.render = function( self, map, entities )
+	t.render = function( self, map, dist )
 		-- local canvas = love.graphics.newCanvas( )
 		-- love.graphics.setCanvas( canvas )
 		if self.link then
@@ -37,12 +37,18 @@ game.newCameraObject = function( )
 		local cx, cy = love.graphics.getWidth( ) / 2, love.graphics.getHeight( ) / 2
 		local xo, yo = self.x - cx + self.w / 2, self.y - cy + self.h / 2
 		love.graphics.translate( -xo, -yo )
-		for x = math.floor( self.x / self.map.blockSize - w/2 ), math.ceil( self.x / self.map.blockSize + w/2 ) + 2 do
-			for y = math.floor( self.y / self.map.blockSize - h/2 ), math.ceil( self.y / self.map.blockSize + h/2 ) + 2 do
+		for x = math.floor( self.x / map.blockSize - w/2 ), math.ceil( self.x / map.blockSize + w/2 ) + 2 do
+			for y = math.floor( self.y / map.blockSize - h/2 ), math.ceil( self.y / map.blockSize + h/2 ) + 2 do
 				if map.blocks[x] and map.blocks[x][y] then
-					local lightlevel = map.blocks[x][y].light
-					love.graphics.setColor( lightlevel * 17, lightlevel * 17, lightlevel * 17 )
 					local rx, ry = map.blocks[x][y].block:getRealXY( )
+					local maxdistance = math.sqrt( ( w / 2 * map.blockSize ) ^ 2 + ( h / 2 * map.blockSize ) ^ 2 )
+					local distance = math.sqrt( ( rx - self.x ) ^ 2 + ( ry - self.y ) ^ 2 )
+					local rd = distance - maxdistance / 2
+					local scaler = math.min( math.max( 0, 1 - ( rd / ( maxdistance / 2 ) ) / 2 ), 1 )
+					if not dist then scaler = 1 end
+					local light = map.blocks[x][y].light
+					local level = math.max( map.blocks[x][y]:getLightLevel( ), 1 )
+					love.graphics.setColor( level * scaler * 17 * light.red, level * scaler * 17 * light.green, level * scaler * 17 * light.blue )
 					map.blocks[x][y].block:render( rx, ry, map )
 					local damage = math.floor( ( map.blocks[x][y].block.damage / map.blocks[x][y].block.maxDamage ) * #game.data["Breaking Animation"] )
 					if damage > 0 then
@@ -52,16 +58,16 @@ game.newCameraObject = function( )
 				end
 			end
 		end
+		love.graphics.setColor( 255, 255, 255 )
 		for i = 1,#map.entities do
 			map.entities[i]:render( )
 		end
 		love.graphics.translate( xo, yo )
-		love.graphics.setColor( 255, 255, 255 )
 		-- love.graphics.setCanvas( )
 		-- love.graphics.draw( canvas )
 	end
 	
-	t.renderCollisionMap = function( self, map, entities )
+	t.renderCollisionMap = function( self, map )
 		if self.link then
 			self.x, self.y = self.link.x, self.link.y
 			self.w, self.h = self.link.w, self.link.h

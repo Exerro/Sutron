@@ -239,6 +239,29 @@ game.newMapObject = function( )
 			for i = 1,#self.map.blocks[self.map.generationData[dir].x] do
 				self.map:rawSet( self.map.generationData[dir].x, i, self.map.blocks[self.map.generationData[dir].x][i].block )
 			end
+			for i = 1,#self.map.blocks[self.map.generationData[dir].x] do
+				self.map:placeBlock( self.map.generationData[dir].x, i, self.map.blocks[self.map.generationData[dir].x][i].block )
+			end
+			for i = #self.map.generationData.lights, 1, -1 do
+				local removed = false
+				if self.map.generationData.lights[i].light.radius + self.map.generationData.lights[i].x < self.map.generationData[dir].x then
+					local d = dir == "left" and "right" or "left"
+					if self.map.generationData.lights[i].x - self.map.generationData.lights[i].light.radius > self.map.generationData[d].x then
+						table.remove( self.map.generationData.lights, i )
+						removed = true
+						game.renderdata = love.timer.getTime( )
+					end
+				end
+				if not removed then
+					self.map:applyColumnLighting( self.map.generationData.lights[i].x, self.map.generationData.lights[i].y, self.map.generationData[dir].x, self.map.generationData.lights[i].light )
+				end
+			end
+			for y = 1,#self.map.blocks[self.map.generationData[dir].x] do
+				if self.map.blocks[self.map.generationData[dir].x][y].block.type ~= "Air" then
+					self.map.blocks[self.map.generationData[dir].x].maxAir = y - 1
+					break
+				end
+			end
 			self.map.generationData[dir].x = self.map.generationData[dir].x + ( dir == "left" and -1 or 1 )
 		end
 	}
@@ -263,6 +286,7 @@ game.newMapObject = function( )
 			distance = 0;
 			data = { };
 		};
+		lights = { }
 	}
 	
 	map.load = function( self )
@@ -308,37 +332,70 @@ game.newMapObject = function( )
 			b:setType( block )
 			block = b
 		end
-		self.blocks[x][y] = { block = block, x = x, y = y, light = 0, lighting = { } }
+		self.blocks[x][y].lighting = self.blocks[x][y].lighting or { }
+		self.blocks[x][y].light = self.blocks[x][y].light or { level = 0, red = 1, blue = 1, green = 1 }
+		self.blocks[x][y].x = x
+		self.blocks[x][y].y = y
+		self.blocks[x][y].block = block
 		self.blocks[x][y].block:setParent( self.blocks[x][y] )
 		self.blocks[x][y].block.map = self
 		self.blocks[x][y].destroy = function( self )
 			local map = self.block.map
-			if self.block.map:rawSet( self.x, self.y, "Air" ) then
-				if self.block.onDestroy then
-					self.block:onDestroy( "Break" )
+			if map.blocks[self.x] and map.blocks[self.x][self.y] then
+				if self.block.lightSource then
+					map:removeLighting( self.x, self.y )
 				end
-				self.block.map:blockUpdate( self.x, self.y, "Break" )
+				map:rawSet( self.x, self.y, "Air" )
 			end
 		end
-		if self.blocks[x][y].block.lightSource then
-			self:applyLighting( x, y, self.blocks[x][y].block.lightSource )
+		self.blocks[x][y].getLightLevel = function( self )
+			if self.block.map.blocks[self.x].maxAir >= self.y then
+				return 15
+			end
+			return math.max( self.light.level, ( self.block.map.blocks[self.x].maxAir + 15 ) - self.y )
+		end
+		if self.blocks[x].maxAir > y and self.blocks[x][y].block.type ~= "Air" then
+			self.blocks[x].maxAir = y - 1
+		else
+			if y - 1 == self.blocks[x].maxAir then
+				for yy = y, self.height do
+					if self.blocks[x][yy].block.type ~= "Air" then
+						self.blocks[x].maxAir = yy - 1
+						break
+					end
+				end
+			end
 		end
 		return true
 	end
 	map.rawBreak = function( self, x, y )
 		if self.blocks[x] and self.blocks[x][y] then
-			if self.blocks[x][y].block.lightSource then
-				self:removeLighting( x, y )
+			if self.blocks[x][y].destroy then
+				self.blocks[x][y]:destroy( )
 			end
-			self.blocks[x][y]:destroy( )
 		end
 	end
 	map.placeBlock = function( self, x, y, block )
+		self:rawBreak( x, y )
 		if self:rawSet( x, y, block ) then
 			self:blockUpdate( x, y, "Place" )
+			if self.blocks[x][y].block.lightSource then
+				self:applyLighting( x, y, self.blocks[x][y].block.lightSource )
+			end
 		end
 	end
-	map.breakBlock = function( self, x, y, damage )
+	map.breakBlock = function( self, x, y )
+		if self.blocks[x] and self.blocks[x][y] then
+			if self.blocks[x][y].block.onDestroy then
+				self.blocks[x][y].block:onDestroy( )
+			end
+			if self.blocks[x][y].destroy then
+				self.blocks[x][y]:destroy( )
+			end
+			self:blockUpdate( x, y, "Break" )
+		end
+	end
+	map.damageBlock = function( self, x, y, damage )
 		if self.blocks[x] and self.blocks[x][y] then
 			self.blocks[x][y].block:addDamage( damage or 1 )
 		end
@@ -346,27 +403,39 @@ game.newMapObject = function( )
 	
 	map.updateLargestLighting = function( self, x, y )
 		if not self.blocks[x][y] then return false end
-		self.blocks[x][y].light = 0
+		self.blocks[x][y].light = { level = 0, red = 1, blue = 1, green = 1 }
+		local light = { red = 1, level = 0, blue = 1, green = 1 }
 		for i = 1,#self.blocks[x][y].lighting do
-			if self.blocks[x][y].lighting[i].level > self.blocks[x][y].light then
-				self.blocks[x][y].light = self.blocks[x][y].lighting[i].level
+			if self.blocks[x][y]:getLightLevel( ) > self.blocks[x][y].light.level then
+				light.level = self.blocks[x][y].lighting[i].level
+				light.red = self.blocks[x][y].lighting[i].light.red or 1
+				light.blue = self.blocks[x][y].lighting[i].light.blue or 1
+				light.green = self.blocks[x][y].lighting[i].light.green or 1
 			end
 		end
+		self.blocks[x][y].light = light
 	end
-	map.applyColumnLighting = function( self, x, y, cx, light )
+	map.applyColumnLighting = function( self, x, y, cx, light, gen )
 		if not self.blocks[cx] then return end
 		local l = light.level
 		local r = light.radius
-		for y = math.max( y - r, 1 ), math.min( y + r, self.height ) do
-			local dx = x - cx
-			local dy = y - y
-			local dist = math.sqrt( dx ^ 2 + dy ^ 2 )
-			local level = math.floor( l - ( dist / r ) * l )
-			if level > 10 then level = 10 end
-			if level < 0 then level = 0 end
-			table.insert( self.blocks[cx][y].lighting, { level = level, light = light } )
-			if self.blocks[cx][y].light < level then
-				self.blocks[cx][y].light = level
+		for yy = math.max( y - r, 1 ), math.min( y + r, self.height ) do
+			if self.blocks[cx][yy] then
+				local dx = x - cx
+				local dy = y - yy
+				local dist = math.sqrt( dx ^ 2 + dy ^ 2 )
+				local level = math.floor( l - ( dist / r ) * l )
+				if level > 15 then level = 15 end
+				if level < 0 then level = 0 end
+				if level > 0 then
+					table.insert( self.blocks[cx][yy].lighting, { level = level, light = light } )
+					if self.blocks[cx][yy]:getLightLevel( ) < level then
+						self.blocks[cx][yy].light.level = level
+						self.blocks[cx][yy].light.red = light.red or 1
+						self.blocks[cx][yy].light.green = light.green or 1
+						self.blocks[cx][yy].light.blue = light.blue or 1
+					end
+				end
 			end
 		end
 	end
@@ -385,15 +454,24 @@ game.newMapObject = function( )
 	end
 	map.applyLighting = function( self, x, y, light )
 		local light = light or self.blocks[x][y].block.lightSource
+		if not self.blocks[x + light.radius] then
+			table.insert( self.generationData.lights, { light = light, x = x, y = y } )
+		end
 		for xx = x - light.radius, x + light.radius do
 			self:applyColumnLighting( x, y, xx, light )
 		end
 	end
-	map.removeLighting = function( self, x, y )
+	map.removeLighting = function( self, x, y, light )
 		if not self.blocks[x] or not self.blocks[x][y] then return end
-		local light = self.blocks[x][y].block.lightSource
+		local light = light or self.blocks[x][y].block.lightSource
+		if not light then return end
 		for xx = x - light.radius, x + light.radius do
 			self:removeColumnLighting( x, y, xx, light )
+		end
+		for i = #self.generationData.lights, 1, -1 do
+			if self.generationData.lights[i].light == light then
+				table.remove( self.generationData.lights, i )
+			end
 		end
 	end
 	

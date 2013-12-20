@@ -29,10 +29,10 @@ game.newItemObject = function( )
 		elseif self.type == "Tool" then
 			local block = map.blocks[x] and map.blocks[x][y] and map.blocks[x][y].block or false
 			if block then
-				if block.name ~= "Air" and block.blockType == self.toolType then
-					map:breakBlock( x, y, self.toolSpeed )
-				elseif block.name ~= "Air" then
-					map:breakBlock( x, y )
+				if block.type ~= "Air" and block.blockType == self.toolType then
+					map:damageBlock( x, y, self.toolSpeed )
+				elseif block.type ~= "Air" then
+					map:damageBlock( x, y )
 				end
 			end
 		end

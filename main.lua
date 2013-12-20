@@ -34,6 +34,8 @@ end
 function love.load( )
 
 	game.hotbar:addItem( "Iron Pickaxe" )
+	game.hotbar:addItem( "Dirt", 10 )
+	game.hotbar:addItem( "Bamboo", 10 )
 
 	game.player = game.newEntityObject( )
 	game.player.inventory:setSlotTemplate( "Player Inventory" )
@@ -54,6 +56,8 @@ function love.load( )
 
 	g:fillSize( )
 	g.data.handlesMouse = true
+	
+	local dist = false
 	
 	g.update = function( self, ev, lastevent )
 		if ev[1] == "update" then
@@ -146,6 +150,8 @@ function love.load( )
 				else
 					game.player.inventory:activate( )
 				end
+			elseif ev[3] == "x" then
+				dist = not dist
 			elseif tonumber( ev[3] ) then
 				local n = tonumber( ev[3] )
 				if n == 0 then n = 10 end
@@ -153,10 +159,11 @@ function love.load( )
 			end
 		end
 	end
+	
 	g.render = function( )
-		game.camera[game.func]( game.camera, game.map )
+		game.camera[game.func]( game.camera, game.map, dist )
 		love.graphics.print( game.camera.x..", "..game.camera.y, 1, 1 )
-		love.graphics.print( math.floor( game.camera.x / 32 )..", "..math.floor( game.camera.y / 32 ), 1, 21 )
+		love.graphics.print( ( math.floor( ( game.camera.x + 1 ) / 32 ) )..", "..( math.floor( ( game.camera.y + 1 ) / 32 ) + 1 ), 1, 21 )
 		love.graphics.print( game.renderdata, 1, 61 )
 		love.graphics.print( love.timer.getFPS( ), 1, 41 )
 		local bx, by = game.camera:getClickPosition( love.mouse.getPosition( ) )
@@ -166,7 +173,9 @@ function love.load( )
 		love.graphics.setColor( 255, 255, 0, 30 )
 		love.graphics.rectangle( "fill", x, y, game.map.blockSize, game.map.blockSize )
 		love.graphics.setColor( 255, 255, 255 )
-		love.graphics.print( game.map.blocks[math.floor( game.camera.x / 32 )].biome, 1, 81 )
+		love.graphics.print( game.map.blocks[math.floor( game.camera.x / 32 )+1].biome, 1, 81 )
+		love.graphics.print( tostring( game.map.blocks[math.floor( ( game.camera.x + 1 ) / 32 )].maxAir ), 1, 101 )
+		love.graphics.print( tostring( game.map.blocks[math.floor( ( game.camera.x + 1 ) / 32 )][math.floor( ( game.camera.y + 1 ) / 32 )]:getLightLevel( ) ), 1, 121 )
 	end
 end
 

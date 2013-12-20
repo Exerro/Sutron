@@ -151,7 +151,6 @@ game.newEntityObject = function( )
 	end
     
     t.update = function( self, mode, dt )
-		game.renderdata = dt
 		local dt = dt or 1
 		if not mode then
 			self:move( "add", self.xv * dt, self.yv * dt )

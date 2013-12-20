@@ -64,6 +64,7 @@ game.blocks = {
 		load = function( self )
 			self.inventory = game.newInventoryObject( )
 			self.inventory:setSlotTemplate( "Block Demo" )
+			self.lightSource = { radius = 5, level = 15 }
 		end;
 		blockUpdate = function( self, side, data )
 			if side == "down" and data == "Break" then
@@ -98,9 +99,8 @@ game.newBlockObject = function( parent )
 	t.ci = false
 	t.lightSource = false
 
-	t.onDestroy = function( self, reason )
-		game.renderdata = "Broken: "..self.parent.x * self.map.blockSize..", "..self.parent.y * self.map.blockSize
-		if reason == "Break" and self.type ~= "Air" then
+	t.onDestroy = function( self )
+		if true or self.type ~= "Air" then
 			self.map:dropItem( self.parent.x * self.map.blockSize, self.parent.y * self.map.blockSize, self.itemName )
 		end
 		if self.inventory then
@@ -159,10 +159,10 @@ game.newBlockObject = function( parent )
 				self[k] = v
 			end
 		end
+		self:setData( game.data.Blocks[type] )
 		if self.load then
 			self:load( )
 		end
-		self:setData( game.data.Blocks[type] )
 	end
 	t.setData = function( self, t )
 		if not t["BlockData"] then return end
@@ -186,7 +186,7 @@ game.newBlockObject = function( parent )
 	t.addDamage = function( self, am )
 		self.damage = self.damage + am
 		if self.damage >= self.maxDamage then
-			self.parent:destroy( )
+			self.map:breakBlock( self.parent.x, self.parent.y )
 		end
 	end
 	t.getRealXY = function( self )
