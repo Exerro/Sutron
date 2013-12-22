@@ -5,6 +5,8 @@ game.newCameraObject = function( )
 	t.w, t.y = 2, 2
 	t.link = false
 	t.majorType = "Camera"
+	t.smoothLighting = false
+	t.useCanvas = false
 
 	t.move = function( self, x, y )
 		self.x, self.y = x, y
@@ -25,8 +27,11 @@ game.newCameraObject = function( )
 	end
 
 	t.render = function( self, map, dist )
-		-- local canvas = love.graphics.newCanvas( )
-		-- love.graphics.setCanvas( canvas )
+		local canvas
+		if self.useCanvas then
+			canvas = love.graphics.newCanvas( )
+			love.graphics.setCanvas( canvas )
+		end
 		if self.link then
 			self.x, self.y = self.link.x, self.link.y
 			self.w, self.h = self.link.w, self.link.h
@@ -48,8 +53,17 @@ game.newCameraObject = function( )
 					if not dist then scaler = 1 end
 					local light = map.blocks[x][y].light
 					local level = math.max( map.blocks[x][y]:getLightLevel( ), 1 )
-					love.graphics.setColor( level * scaler * 17 * light.red, level * scaler * 17 * light.green, level * scaler * 17 * light.blue )
+					if not self.smoothLighting then
+						love.graphics.setColor( level * scaler * 17 * light.red, level * scaler * 17 * light.green, level * scaler * 17 * light.blue )
+					end
 					map.blocks[x][y].block:render( rx, ry, map )
+					if self.smoothLighting then
+						local l = 255 - level * scaler * 17
+						if l < 0 then l = 0 end
+						if l > 255 then l = 255 end
+						love.graphics.setColor( 0, 0, 0, 100 )
+						love.graphics.rectangle( "fill", rx, ry, map.blockSize, map.blockSize )
+					end
 					local damage = math.floor( ( map.blocks[x][y].block.damage / map.blocks[x][y].block.maxDamage ) * #game.data["Breaking Animation"] )
 					if damage > 0 then
 						local damage = damage > 10 and 10 or damage
@@ -60,11 +74,26 @@ game.newCameraObject = function( )
 		end
 		love.graphics.setColor( 255, 255, 255 )
 		for i = 1,#map.entities do
+			local rx, ry = map.entities[i].x, map.entities[i].y
+			local maxdistance = math.sqrt( ( w / 2 * map.blockSize ) ^ 2 + ( h / 2 * map.blockSize ) ^ 2 )
+			local distance = math.sqrt( ( rx - self.x ) ^ 2 + ( ry - self.y ) ^ 2 )
+			local rd = distance - maxdistance / 2
+			local scaler = math.min( math.max( 0, 1 - ( rd / ( maxdistance / 2 ) ) / 2 ), 1 )
+			if not dist then scaler = 1 end
+			local x, y = math.floor( ( self.x + 1 ) / map.blockSize ), math.floor( ( self.y + 1 ) / map.blockSize )
+			local light, level = { red = 1, green = 1, blue = 1 }, 1
+			if map.blocks[x] and map.blocks[x][y] then
+				light = map.blocks[x][y].light
+				level = math.max( map.blocks[x][y]:getLightLevel( ), 1 )
+			end
+			love.graphics.setColor( level * scaler * 17 * light.red, level * scaler * 17 * light.green, level * scaler * 17 * light.blue )
 			map.entities[i]:render( )
 		end
 		love.graphics.translate( xo, yo )
-		-- love.graphics.setCanvas( )
-		-- love.graphics.draw( canvas )
+		if self.useCanvas then
+			love.graphics.setCanvas( )
+			love.graphics.draw( canvas )
+		end
 	end
 	
 	t.renderCollisionMap = function( self, map )

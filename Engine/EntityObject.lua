@@ -1,27 +1,33 @@
 
-game.newEntityObject = function( )
+game.newEntityObject = function( inv )
     local t = { }
+	t.type = "Entity"
+
     t.x, t.y = 1, 1
     t.ox, t.oy = 1, 1
+
     t.xv, t.yv = 0, 0
-    t.xdirection = "right"
-	t.ydirection = "down"
-    t.w, t.h = 1, 1
-    t.frames = { }
-    t.frame = 1
-    t.health = 100
-    t.maxhealth = 100
-    t.inventory = game.newInventoryObject( )
-    t.alive = true
-    t.link = false
 	t.xfriction = 0.94
 	t.yfriction = 0.96
 	t.tvel = 20
-	t.majorType = "Entity"
-	t.ci = { }
+
+    t.w, t.h = 1, 1
+
+    t.xdirection = "right"
+	t.ydirection = "down"
+    t.frames = { }
+    t.frame = 1
 	t.lastRenderTime = 0
 	t.renderSpacing = 0.2
 	t.animationSel = "Default"
+
+    t.health = 100
+    t.maxhealth = 100
+    t.alive = true
+
+    t.inventory = inv and game.newInventoryObject( )
+    t.link = false
+	t.ci = { }
 
     t.render = function( self )
 		if self.frames[self.animationSel][self.frame] then
@@ -169,7 +175,7 @@ game.newEntityObject = function( )
 	
 	t.isColliding = function( self, other )
 		local ent = other
-		if other.majorType == "Block" then
+		if other.type == "Block" then
 			if not other.solid then return false, "None" end
 			ent = { w = self.map.blockSize, h = self.map.blockSize }
 			ent.x, ent.y = other:getRealXY( )
@@ -185,15 +191,9 @@ game.newEntityObject = function( )
 		yl = math.min( self.h, ( ent.y + ent.h - 1 ) - self.y )
 		local col, x, y = game.physics.collisionMM( self:getCollisionMap( ), other:getCollisionMap( ), xo, yo, xs, ys, xl, yl )
 		if not col then return false, "Rectangle" end
-		if self.onCollision then
-			self:onCollision( other, true )
-		end
-		if other.onCollision then
-			other:onCollision( self, false )
-		end
 		return true, x, y
 	end	
-	t.isCollidingWithMap = function( self, map )
+	t.isCollidingWithMap = function( self, map, data )
 		local map = self.map or map
 		local selfx, selfy = math.floor( self.x / map.blockSize ), math.floor( self.y / map.blockSize )
 		for x = selfx, selfx + math.ceil( self.w / map.blockSize ) do
@@ -201,7 +201,9 @@ game.newEntityObject = function( )
 				for y = selfy, selfy + math.ceil( self.h / map.blockSize ) do
 					if map.blocks[x][y] then
 						if self:isColliding( map.blocks[x][y].block ) then
-							return true, map.blocks[x][y].block
+							if self.onCollision then
+								self:onCollision( map.blocks[x][y].block, data )
+							end
 						end
 					end
 				end
@@ -209,7 +211,9 @@ game.newEntityObject = function( )
 		end
 		for i = 1,#map.entities do
 			if self ~= map.entities[i] and self:isColliding( map.entities[i] ) then
-				return true, map.entities[i]
+				if self.onCollision then
+					self:onCollision( map.entities[i], data )
+				end
 			end
 		end
 		return false

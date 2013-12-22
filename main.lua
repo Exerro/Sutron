@@ -33,13 +33,9 @@ end
 
 function love.load( )
 
-	game.hotbar:addItem( "Iron Pickaxe" )
-	game.hotbar:addItem( "Dirt", 10 )
-	game.hotbar:addItem( "Bamboo", 10 )
-
-	game.player = game.newEntityObject( )
+	game.player = game.newPlayerEntity( true )
 	game.player.inventory:setSlotTemplate( "Player Inventory" )
-	game.player:move( "set", 0, game.map.blocks[0].maxAir * game.map.blockSize )
+	game.player:move( "set", 0, game.map.blocks[0].lastAir * game.map.blockSize )
 	game.player:newAnimation( "Still" )
 	game.player:newFrame( game.data.Sprites.Player[1] )
 	game.player:newAnimation( "Walking" )
@@ -51,6 +47,11 @@ function love.load( )
 	game.map:newEntity( game.player )
 	game.camera = game.newCameraObject( )
 	game.camera:linkTo( game.player )
+
+	game.player.hotbar:addItem( "Iron Pickaxe" )
+	game.player.hotbar:addItem( "Dirt", 10 )
+	game.player.hotbar:addItem( "Bamboo", 10 )
+	game.player.hotbar:activate( )
 	
 	local lastClickTime = 0
 
@@ -69,15 +70,15 @@ function love.load( )
 			local xl = game.camera:getLeftClipping( )
 			local xr = game.camera:getRightClipping( )
 			if not game.map.blocks[xl] then
-				game.map.generation:generateColumn( "left" )
+				game.map.generation:newColumn( "left" )
 			end
 			if not game.map.blocks[xr] then
-				game.map.generation:generateColumn( "right" )
+				game.map.generation:newColumn( "right" )
 			end
 			if love.mouse.isDown( "l" ) and love.timer.getTime( ) - lastClickTime > 0.2 then
 				if self:isMouseIn( love.mouse.getPosition( ) ) then
 					local x, y, xd, yd = game.camera:getClickPosition( love.mouse.getPosition( ) )
-					game.hotbar:useItem( game.map, x, y, xd, yd )
+					game.player.hotbar:useItem( game.map, x, y, xd, yd )
 					lastClickTime = love.timer.getTime( )
 				end
 			end
@@ -96,20 +97,6 @@ function love.load( )
 			end
 			if not key then
 				game.player:setAnimation( "Still" )
-			end
-			local xc = function( self, other )
-				if self == game.player then
-					if not game.physics.collisionY( 4, self, other ) then
-						self:applyVelocity( 0, -self.map.gravity * 2 )
-					end
-				end
-				return false
-			end
-			local yc = function( self, other )
-				if self == game.player then
-					return 0
-				end
-				return false
 			end
 			for i = 1,#game.map.entities do
 				game.map:moveEntity( game.map.entities[i], xc, yc, true, 2 or ev[2] * 60 )
@@ -143,7 +130,16 @@ function love.load( )
 					game.player:applyVelocity( 0, -8 ) -- if there is a block below, jump
 				end
 			elseif ev[3] == "tab" then
-				game.func = game.func == "render" and "renderCollisionMap" or "render"
+				if game.func == "render" then
+					game.func = "renderCollisionMap"
+				else
+					if game.camera.smoothLighting then
+						game.func = "render"
+					else
+						game.func = "render"
+					end
+					game.camera.smoothLighting = not game.camera.smoothLighting
+				end
 			elseif ev[3] == "e" then
 				if game.activeInventory then
 					game.activeInventory:deactivate( )
@@ -155,7 +151,7 @@ function love.load( )
 			elseif tonumber( ev[3] ) then
 				local n = tonumber( ev[3] )
 				if n == 0 then n = 10 end
-				game.hotbar.data.selection = n
+				game.player.hotbar.selection = n
 			end
 		end
 	end
@@ -174,8 +170,8 @@ function love.load( )
 		love.graphics.rectangle( "fill", x, y, game.map.blockSize, game.map.blockSize )
 		love.graphics.setColor( 255, 255, 255 )
 		love.graphics.print( game.map.blocks[math.floor( game.camera.x / 32 )+1].biome, 1, 81 )
-		love.graphics.print( tostring( game.map.blocks[math.floor( ( game.camera.x + 1 ) / 32 )].maxAir ), 1, 101 )
-		love.graphics.print( tostring( game.map.blocks[math.floor( ( game.camera.x + 1 ) / 32 )][math.floor( ( game.camera.y + 1 ) / 32 )]:getLightLevel( ) ), 1, 121 )
+		love.graphics.print( tostring( game.map.blocks[math.floor( ( game.camera.x + 1 ) / 32 )].lastAir ), 1, 101 )
+		--love.graphics.print( tostring( game.map.blocks[math.floor( ( game.camera.x + 1 ) / 32 )][math.floor( ( game.camera.y + 1 ) / 32 )]:getLightLevel( ) ), 1, 121 )
 	end
 end
 
