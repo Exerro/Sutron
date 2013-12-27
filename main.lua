@@ -28,6 +28,7 @@ require "Resources/InventoryTypes"
 require "Resources/EntityTypes"
 require "Resources/Biomes"
 require "Resources/World"
+require "Resources/BlockUpdateMethods"
 
 if love.filesystem.exists( "Resources/Start.lua" ) then
 	require "Resources/Start"
@@ -40,8 +41,8 @@ game.resource.map.newOverworldMap( game.map )
 game.map:load( "Tundra" )
 
 local om = game.engine.map.create( )
-game.resource.map.newOverworldMap( om )
-om:load( "Plains" )
+game.resource.map.newUnderworldMap( om )
+om:load( )
 
 game.world:newMap( game.map )
 game.world:newMap( om )

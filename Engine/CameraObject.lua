@@ -52,7 +52,7 @@ game.engine.camera.create = function( )
 					local distance = math.sqrt( ( rx - self.x ) ^ 2 + ( ry - self.y ) ^ 2 )
 					local rd = distance - maxdistance / 2
 					local scaler = math.min( math.max( 0, 1 - ( rd / ( maxdistance / 2 ) ) / 2 ), 1 )
-					if not distance then scaler = 1 end
+					if not dist then scaler = 1 end
 					local light = map.blocks[x][y].light
 					local level = math.max( map.blocks[x][y]:getLightLevel( ), 1 )
 					if not self.smoothLighting and self.useLighting then

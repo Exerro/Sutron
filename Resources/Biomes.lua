@@ -84,9 +84,23 @@ local overworld_biomes = {
 				name = "Tree";
 				data = { }; -- structure data not spawn data
 				spacing = { min = 1, max = 5 }; -- leave either/both nil to have no limit
-				spawnchance = "1/5"; -- both must be integers so not "1/5.3" because it will go to 1/5
+				spawnchance = "1:5"; -- Both must be integers, so not "1:5.3", because that would be the same as "1:5". You can use math operators like *
 			};
 		};
+	};
+}
+
+local underworld_biomes = {
+	Nether = {
+		cover = "Netherrack:1";
+		mxh = 100;
+		mnh = 80;
+		mxg = 1;
+		mng = 0;
+		mxd = 10000;
+		mnd = 1;
+		underground = "Netherrack:1";
+		structures = { };
 	};
 }
 
@@ -94,6 +108,14 @@ game.resource.map = { }
 game.resource.map.newOverworldMap = function( map )
 	local map = map or game.engine.map.create( )
 	for k, v in pairs( overworld_biomes ) do
+		map.generation:addBiomeType( k, game.clone( v ) )
+	end
+	return map
+end
+
+game.resource.map.newUnderworldMap = function( map )
+	local map = map or game.engine.map.create( )
+	for k, v in pairs( underworld_biomes ) do
 		map.generation:addBiomeType( k, game.clone( v ) )
 	end
 	return map

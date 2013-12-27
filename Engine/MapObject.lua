@@ -57,16 +57,25 @@ game.engine.map.create = function( )
 	end
 	map.newUpdater = function( self, func, parent )
 		table.insert( self.updaters, { func = func, parent = parent, index = #self.updaters } )
+		return self.updaters, #self.updaters
 	end
 	map.removeUpdater = function( self, n )
 		if type( n ) == "table" then
 			for i = n.index, 1, -1 do
 				if self.updaters[i] == n then
 					n = i
+					break
+				end
+			end
+		elseif type( n ) == "function" then
+			for i = #self.updaters, 1, -1 do
+				if self.updaters[i].func == n then
+					n = i
+					break
 				end
 			end
 		end
-		if type( n ) == "table" then return false end
+		if type( n ) ~= "number" then return false end
 		table.remove( self.updaters, n )
 		return true
 	end
@@ -153,10 +162,9 @@ game.engine.map.create = function( )
 	map.newBlock = function( self, x, y, name )
 		local block = { }
 		block.type = "BlockTracker"
-		block.block = game.engine.block.create( name )
+		block.block = game.engine.block.create( )
 		block.block:setType( name )
 		block.block:setParent( block )
-		--block.block.map = self
 		block.parent = self
 		block.x = x
 		block.y = y
@@ -204,7 +212,6 @@ game.engine.map.create = function( )
 		if not self.blocks[x] or not self.blocks[x][y] then return end
 		self.blocks[x][y].block = block
 		self.blocks[x][y].block:setParent( self.blocks[x][y] )
-		self.blocks[x][y].block.map = self
 		if y <= self.blocks[x].lastAir and block.name ~= "Air" then
 			self.blocks[x].lastAir = y - 1
 		end
@@ -234,7 +241,7 @@ game.engine.map.create = function( )
 			end
 		end
 	end
-	
+
 	map.blockUpdate = function( self, x, y, sdata, bdata, ... )
 		if not self.blocks[x] or not self.blocks[x][y] then return false end
 		local args = { ... }
@@ -248,6 +255,29 @@ game.engine.map.create = function( )
 			end
 		end
 		self.blocks[x][y].block:event( "self", bdata, unpack( args ) )
+		return true
+	end
+	
+	map.rawMove = function( self, x, y, x2, y2 )
+		self:rawSet( x2, y2, self.blocks[x][y].block )
+		self:rawBreak( x, y )
+	end
+	
+	map.moveBlock = function( self, x, y, x2, y2 )
+		local directions = { { x = -1, y = 0, name = "left" }, { x = 1, y = 0, name = "right" }, { x = 0, y = -1, name = "up" }, { x = 0, y = 1, name = "down" } }
+		local md
+		for i = 1,#directions do
+			if directions[i].x + x == x2 and directions[i].y + y == y2 then
+				md = directions[i]
+				break
+			end
+		end
+		if not md then return false end
+		self:blockUpdate( x, y, "MoveFromBefore", md.name )
+		self:blockUpdate( x2, y2, "MoveToBefore", md.name )
+		self:rawMove( x, y, x2, y2 )
+		self:blockUpdate( x, y, "MoveFromAfter", md.name )
+		self:blockUpdate( x2, y2, "MoveToAfter", md.name )
 		return true
 	end
 	
@@ -488,5 +518,6 @@ game.engine.map.create = function( )
 		ent:isCollidingWithMap( self, "Y", grav )
 	end
 	
+	map.type = "Map"
 	return map
 end
