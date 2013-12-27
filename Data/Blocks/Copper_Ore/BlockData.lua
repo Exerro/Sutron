@@ -6,4 +6,11 @@ end;
 block.getCollisionMap = function( self )
 	return game.data.Blocks.Stone.Texture.collisionMap.left.down
 end;
+block.event = function( self, dir, event, ... )
+	local data = { ... }
+	if event == "Break" and dir == "self" then
+		local map = self.parent.parent.world:changeMap( "add" )
+		self.parent.parent.world:changeEntityMap( self.parent.parent, game.player, self.parent.parent.world:getMapByID( map ) )
+	end
+end
 block.maxdamage = 2;

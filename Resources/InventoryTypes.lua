@@ -19,5 +19,5 @@ local types = {
 }
 
 for k, v in pairs( types ) do
-	game.newInventoryTemplate( k, v )
+	game.engine.inventory.newTemplate( k, v )
 end

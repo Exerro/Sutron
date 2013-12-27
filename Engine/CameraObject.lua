@@ -1,5 +1,6 @@
 
-game.newCameraObject = function( )
+game.engine.camera = { }
+game.engine.camera.create = function( )
 	local t = { }
 	t.x, t.y = 1, 1
 	t.w, t.y = 2, 2

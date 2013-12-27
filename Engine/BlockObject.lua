@@ -1,16 +1,6 @@
 
-game.blockUpdateMethods = {
-	["Flowing"] = function( self, map )
-		
-	end;
-	["Gravity"] = function( self, map )
-		
-	end;
-}
-
-game.blocks = { }
-
-game.newBlockObject = function( )
+game.engine.block = { }
+game.engine.block.create = function( )
 	local t = { }
 	t.type = "Block"
 	t.name = "Air"
@@ -41,10 +31,11 @@ game.newBlockObject = function( )
 		end
 	end;
 	
-	t.event = function( self, dir, ... )
-		local event = { ... }
-		if event[1] == "Break" and dir == "self" and self.name ~= "Air" then
-			self.parent.parent:dropItem( self.parent.x, self.parent.y, self.itemName, 1 )
+	t.event = function( self, dir, event, ... )
+		local data = { ... }
+		if event == "Break" and dir == "self" and self.name ~= "Air" then
+			local x, y = self:getRealXY( )
+			self.parent.parent:dropItem( x, y, self.itemName, 1 )
 			if self.inventory then
 				local items = self.inventory:getAllItems( )
 				local t = { }
@@ -95,14 +86,8 @@ game.newBlockObject = function( )
 		return game.data.Blocks[self.name].Texture.collisionMap[x or self.xdirection][y or self.ydirection]
 	end
 	t.setType = function( self, type )
-		game.blocks[type] = self
 		self.name = type
 		self.itemName = type
-		if game.blocks[type] then
-			for k, v in pairs( game.blocks[type] ) do
-				self[k] = v
-			end
-		end
 		self:setData( game.data.Blocks[type] )
 		if self.load then
 			self:load( )
@@ -110,7 +95,7 @@ game.newBlockObject = function( )
 	end
 	t.setData = function( self, t )
 		if not t["BlockData"] then return end
-		local data = t.BlockData.data
+		local data = t.BlockData
 		local env = { }
 		env.block = self
 		env.game = game
@@ -135,10 +120,4 @@ game.newBlockObject = function( )
 		return self.parent.x * self.map.blockSize, self.parent.y * self.map.blockSize
 	end
 	return t
-end
-
-game.newBlock = function( type )
-	local block = game.newBlockObject( )
-	block:setType( type )
-	return block
 end

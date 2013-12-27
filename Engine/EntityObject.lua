@@ -1,5 +1,6 @@
 
-game.newEntityObject = function( inv )
+game.engine.entity = { }
+game.engine.entity.create = function( )
     local t = { }
 	t.type = "Entity"
 
@@ -25,7 +26,6 @@ game.newEntityObject = function( inv )
     t.maxhealth = 100
     t.alive = true
 
-    t.inventory = inv and game.newInventoryObject( )
     t.link = false
 	t.ci = { }
 

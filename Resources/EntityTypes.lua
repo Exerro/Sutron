@@ -1,7 +1,12 @@
 
-game.newPlayerEntity = function( )
-	local ent = game.newEntityObject( true )
-	ent.hotbar = game.newHotbarObject( )
+game.resource.entity = game.resource.entity or { }
+game.resource.entity.newPlayer = function( )
+	local ent = game.engine.entity.create( )
+	ent.inventory = game.engine.inventory.create( )
+	ent.inventory:setSlotTemplate( "Player Inventory" )
+	ent.hotbar = game.engine.inventory.createHotbar( )
+	ent.camera = game.engine.camera.create( )
+	ent.camera:linkTo( ent )
 	ent.onCollision = function( self, other, data )
 		if other.type == "Block" then
 			self:moveBack( )
@@ -19,8 +24,9 @@ game.newPlayerEntity = function( )
 	return ent
 end
 
-game.newItemEntity = function( t )
-	local ent = game.newEntityObject( true )
+game.resource.entity.newItem = function( t )
+	local ent = game.engine.entity.create( )
+	ent.inventory = game.engine.inventory.create( )
 	if t then
 		for i = 1,#t do
 			ent.inventory:newSlot( 1, 1 )

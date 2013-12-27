@@ -1,87 +1,5 @@
 
--- Generation
-
-local standardUndergroundSpawn = "Stone:100,Copper_Ore:5"
-
-local biomes = { 
-	Plains = {
-		cover = "Dirt:3,Stone:1";
-		mxh = 100; -- max height
-		mnh = 95; -- min height
-		mxg = 1; -- max gradient
-		mng = 0; -- min gradient
-		mxd = 30; -- max distance
-		mnd = 10; -- min distance
-		underground = standardUndergroundSpawn; -- block:probability
-		structures = { };
-	};
-	Something = {
-		cover = "Bamboo:1,Stone:3";
-		mxh = 90;
-		mnh = 80;
-		mxg = 2;
-		mng = 0;
-		mxd = 30;
-		mnd = 10;
-		underground = standardUndergroundSpawn;
-		structures = { };
-	};
-	Mountain = {
-		cover = "Dirt:3";
-		mxh = 80;
-		mnh = 30;
-		mxg = 4;
-		mng = 2;
-		mxd = 30;
-		mnd = 10;
-		underground = standardUndergroundSpawn;
-		structures = { };
-	};
-	Desert = {
-		cover = "Sand:4,Stone:1";
-		mxh = 100;
-		mnh = 95;
-		mxg = 1;
-		mng = 0;
-		mxd = 30;
-		mnd = 10;
-		underground = standardUndergroundSpawn;
-		structures = { };
-	};
-	Forest = {
-		cover = "Dirt:4,Stone:1";
-		mxh = 100;
-		mnh = 95;
-		mxg = 2;
-		mng = 0;
-		mxd = 30;
-		mnd = 10;
-		underground = standardUndergroundSpawn;
-		structures = { { name = "Tree", spacing = 3, } };
-	};
-	Quarry = {
-		cover = "Chalk:4,Stone:1";
-		mxh = 140;
-		mnh = 110;
-		mxg = 1;
-		mng = 0;
-		mxd = 30;
-		mnd = 10;
-		underground = standardUndergroundSpawn;
-		structures = { };
-	};
-	Tundra = {
-		cover = "Dirt:4,Stone:1";
-		mxh = 100;
-		mnh = 80;
-		mxg = 2;
-		mng = 0;
-		mxd = 30;
-		mnd = 10;
-		underground = standardUndergroundSpawn;
-		structures = { };
-	};
-}
+-- Biomes & generation
 
 local loadBiome = function( t )
 	if not t.cover then
@@ -120,7 +38,8 @@ end
 
 -- Map object
 
-game.newMapObject = function( )
+game.engine.map = { }
+game.engine.map.create = function( )
 	local map = { }
 	
 	map.seaLevel = 128
@@ -129,6 +48,28 @@ game.newMapObject = function( )
 	map.blockSize = 32
 	map.blockCountX = math.ceil( love.graphics.getWidth( ) / map.blockSize )
 	map.blockCountY = math.ceil( love.graphics.getHeight( ) / map.blockSize )
+	
+	map.updaters = { }
+	map.update = function( self )
+		for i = 1,#self.updaters do
+			self.updaters[i]:func( )
+		end
+	end
+	map.newUpdater = function( self, func, parent )
+		table.insert( self.updaters, { func = func, parent = parent, index = #self.updaters } )
+	end
+	map.removeUpdater = function( self, n )
+		if type( n ) == "table" then
+			for i = n.index, 1, -1 do
+				if self.updaters[i] == n then
+					n = i
+				end
+			end
+		end
+		if type( n ) == "table" then return false end
+		table.remove( self.updaters, n )
+		return true
+	end
 	
 	map.blocks = { }
 	
@@ -175,7 +116,9 @@ game.newMapObject = function( )
 						local distance = math.sqrt( ( x - xx ) ^ 2 + ( y - yy ) ^ 2 )
 						if distance < r then
 							local p = l / r
-							local level = math.floor( l - distance * p )
+							local level = l - distance * p
+							if level < self.min then level = self.min end
+							if level > self.max then level = self.max end
 							local l = { level = level, red = light.red or 1, blue = light.blue or 1, green = light.green or 1, light = light }
 							table.insert( self.parent.blocks[xx][yy].lighting, l )
 							if level > self.parent.blocks[xx][yy].light.level then
@@ -210,7 +153,8 @@ game.newMapObject = function( )
 	map.newBlock = function( self, x, y, name )
 		local block = { }
 		block.type = "BlockTracker"
-		block.block = game.newBlock( name )
+		block.block = game.engine.block.create( name )
+		block.block:setType( name )
 		block.block:setParent( block )
 		block.block.map = self
 		block.parent = self
@@ -228,12 +172,10 @@ game.newMapObject = function( )
 	end
 	
 	map.dropItem = function( self, x, y, data, count )
-		local x = x * self.blockSize
-		local y = y * self.blockSize
 		if type( data ) ~= "table" then
 			data = { { name = data, count = count or 1 } }
 		end
-		local ent = game.newItemEntity( data )
+		local ent = game.resource.entity.newItem( data )
 		ent:resize( self.blockSize / 2, self.blockSize / 2 )
 		ent:move( "set", x + self.blockSize / 4, y + self.blockSize / 4 )
 		if #data == 1 and game.data.Items[data[1].name] and game.data.Items[data[1].name].Drop then
@@ -244,9 +186,20 @@ game.newMapObject = function( )
 		self:newEntity( ent )
 	end
 	
+	map.dropInventory = function( self, x, y, inventory )
+		local i = inventory:getAllItems( )
+		local items = { }
+		for k, v in pairs( i ) do
+			table.insert( items, { name = k, count = v } )
+		end
+		self:dropItem( x, y, items )
+	end
+	
 	map.rawSet = function( self, x, y, block )
 		if type( block ) == "string" then
-			block = game.newBlock( block )
+			b = game.engine.block.create( )
+			b:setType( block )
+			block = b
 		end
 		if not self.blocks[x] or not self.blocks[x][y] then return end
 		self.blocks[x][y].block = block
@@ -258,11 +211,17 @@ game.newMapObject = function( )
 		if block.lightSource then
 			self.lighting:applyLighting( x, y, block.lightSource )
 		end
+		if block.updater then
+			self:newUpdater( block.updater, block )
+		end
 	end
 	
 	map.rawBreak = function( self, x, y )
 		if self.blocks[x][y].block.lightSource then
 			self.lighting:removeLighting( x, y, self.blocks[x][y].block.lightSource )
+		end
+		if self.blocks[x][y].block.updater then
+			self:removeUpdater( self.blocks[x][y].block.updater )
 		end
 		self:rawSet( x, y, "Air" )
 		if y - 1 == self.blocks[x].lastAir then
@@ -276,28 +235,31 @@ game.newMapObject = function( )
 		end
 	end
 	
-	map.blockUpdate = function( self, x, y, data )
+	map.blockUpdate = function( self, x, y, sdata, bdata, ... )
 		if not self.blocks[x] or not self.blocks[x][y] then return false end
-		if type( data ) ~= "table" then
-			data = { data }
-		end
+		local args = { ... }
 		local directions = { { x = -1, y = 0, name = "right" }, { x = 1, y = 0, name = "left" }, { x = 0, y = -1, name = "down" }, { x = 0, y = 1, name = "up" } }
 		for i = 1,#directions do
 			local nx, ny = x + directions[i].x, y + directions[i].y
 			if self.blocks[nx] and self.blocks[nx][ny] then
 				if self.blocks[nx][ny].block.event then
-					self.blocks[nx][ny].block:event( directions[i].name, unpack( data ) )
+					self.blocks[nx][ny].block:event( directions[i].name, sdata, unpack( args ) )
 				end
 			end
 		end
-		self.blocks[x][y].block:event( "self", unpack( data ) )
+		self.blocks[x][y].block:event( "self", bdata, unpack( args ) )
 		return true
 	end
 	
 	map.breakBlock = function( self, x, y )
-		if self:blockUpdate( x, y, "Break" ) then
-			self:rawBreak( x, y )
+		if not self.blocks[x] or not self.blocks[x][y] then return end
+		self:blockUpdate( x, y, "BreakBefore", "Break" )
+		if self.blocks[x][y].block.inventory then
+			local xx, yy = self.blocks[x][y].block:getRealXY( )
+			self:dropInventory( xx, yy, self.blocks[x][y].block.inventory )
 		end
+		self:rawBreak( x, y )
+		self:blockUpdate( x, y, "BreakAfter" )
 	end
 	
 	map.placeBlock = function( self, x, y, block )
@@ -307,11 +269,9 @@ game.newMapObject = function( )
 		end
 		if self.blocks[x][y].block.solid then return end
 		-- check for solidity of the block at [x][y]
-		if self.blocks[x][y].block.event then
-			self.blocks[x][y].block:event( "self", "Replace", block.block )
-		end
+		self:blockUpdate( x, y, "PlaceBefore", "Replace", block.block )
 		self:rawSet( x, y, block.block )
-		self:blockUpdate( x, y, "Place", block.block )
+		self:blockUpdate( x, y, "PlaceAfter", "Placed", block.block )
 		return block
 	end
 
@@ -360,10 +320,6 @@ game.newMapObject = function( )
 		self.biomes[name] = loadBiome( t )
 	end
 	
-	for k, v in pairs( biomes ) do
-		map.generation:addBiomeType( k, v )
-	end
-	
 	map.generation.getNewOre = function( self, dir )
 		self.parent:setRandomSeed( self.data[dir].x )
 		local biome = self.biomes[self.data[dir].biome]
@@ -408,7 +364,7 @@ game.newMapObject = function( )
 	
 	map.generation.getHeightTarget = function( self, dir )
 		self.parent:setRandomSeed( self.data[dir].x )
-		local biome = biomes[self.data[dir].biome]
+		local biome = self.biomes[self.data[dir].biome]
 		local height = math.random( biome.mnh, biome.mxh )
 		return height
 	end

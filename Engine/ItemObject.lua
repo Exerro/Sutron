@@ -1,6 +1,15 @@
 
-game.items = { }
-game.newItemObject = function( )
+local items = { }
+
+game.engine.item = { }
+game.engine.item.get = function( name )
+	if items[name] then
+		return items[name]
+	end
+	return false
+end
+
+game.engine.item.create = function( )
 	local i = { }
 	i.name = "Stone"
 	i.type = "Block"
@@ -11,11 +20,9 @@ game.newItemObject = function( )
 	i.useInMap = function( self, map, x, y, xd, yd )
 		if self.type == "Block" then
 			local ok = true
-			if not game.blocks[self.name] or game.blocks[self.name].solid then
-				for i = 1,#map.entities do
-					local col = game.physics.collisionBERR( map.entities[i], x, y )
-					if col then ok = false end
-				end
+			for i = 1,#map.entities do
+				local col = game.physics.collisionBERR( map.entities[i], x, y )
+				if col then ok = false end
 			end
 			if map.blocks[x] and map.blocks[x][y] and map.blocks[x][y].block.solid then
 				ok = false
@@ -48,7 +55,7 @@ game.newItemObject = function( )
 		love.graphics.draw( image, x, y, 0, dir == "right" and -1 or 1 )
 	end;
 	i.setType = function( self, type )
-		game.items[type] = self
+		items[type] = self
 		self.name = type
 		self.itemName = type
 		self:setData( game.data.Items[type] )
@@ -58,7 +65,7 @@ game.newItemObject = function( )
 	end
 	i.setData = function( self, t )
 		if not t["ItemData"] then return end
-		local data = t.ItemData.data
+		local data = t.ItemData
 		local env = { }
 		env.item = self
 		env.game = game
@@ -70,6 +77,6 @@ game.newItemObject = function( )
 end
 
 for k, v in pairs( game.data.Items ) do
-	local i = game.newItemObject( )
+	local i = game.engine.item.create( )
 	i:setType( k )
 end

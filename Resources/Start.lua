@@ -1,0 +1,1 @@
+local i = game.engine.inventory.create( )i:setSlotTemplate( "Player Inventory" )i:addItem( "Dimension Swapper" )game.playerStartInventory = i

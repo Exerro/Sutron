@@ -1,9 +1,19 @@
 
 --[[ Extensions
 	scm - Sutron Collision Map ( a png image )
-	sid - Sutron Item Data ( lua file ) : gets item in env ( this is the item object )
-	sbd - Sutron Block Data ( same as above but [block] in env not item )
 ]]
+
+game.clone = function( tab )
+	local t = { }
+	for k, v in pairs( tab ) do
+		if type( v ) ~= "table" then
+			t[k] = v
+		else
+			t[k] = game.clone( v )
+		end
+	end
+	return t
+end
 
 game.explode = function(d,p)
 	local t, ll
@@ -64,6 +74,29 @@ local function getFilePath( file )
 	return false
 end
 
+local function loadConf( str )
+	local t = { }
+	local namestart = 1
+	local varstart
+	local name
+	for i = 1,#str do
+		if str:sub( i, i ) == ":" and namestart then
+			namestart = false
+			name = str:sub( namestart, i - 1 )
+			varstart = i + 1
+		elseif str:sub( i, i ) == ";" or str:sub( i, i ) == "\n" and name then
+			namestart = i + 1
+			t[name] = str:sub( varstart, i - 1 )
+			local f = loadstring( "return "..t[name] )
+			if f then
+				t[name] = f( )
+			end
+			name = false
+		end
+	end
+	return t
+end
+
 local loadPath
 loadPath = function( path, t )
 	local files = love.filesystem.enumerate( path )
@@ -95,6 +128,11 @@ loadPath = function( path, t )
 				t[name].data = lines
 			elseif ext == "sid" or ext == "sbd" then
 				t[name].data = loadstring( love.filesystem.read( path.."/"..files[i] ) )
+			elseif ext == "lua" then
+				t[name] = loadstring( love.filesystem.read( path.."/"..files[i] ) )
+			elseif ext == "scf" then
+				t[name].data = loadConf( love.filesystem.read( path.."/"..files[i] ) )
+				t[name].name = name
 			end
 			if ext == "scm" or ext == "png" then
 				local imageData = love.image.newImageData( path.."/"..files[i] )
