@@ -156,7 +156,7 @@ game.engine.map.create = function( )
 		block.block = game.engine.block.create( name )
 		block.block:setType( name )
 		block.block:setParent( block )
-		block.block.map = self
+		--block.block.map = self
 		block.parent = self
 		block.x = x
 		block.y = y

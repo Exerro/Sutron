@@ -1,5 +1,11 @@
 
+local blocks = { }
 game.engine.block = { }
+
+game.engine.block.get = function( type )
+	return blocks[type] or false
+end
+
 game.engine.block.create = function( )
 	local t = { }
 	t.type = "Block"
@@ -16,20 +22,6 @@ game.engine.block.create = function( )
 	t.solid = true
 
 	t.lightSource = false
-
-	t.onDestroy = function( self )
-		if self.name ~= "Air" then
-			self.map:dropItem( self.parent.x * self.map.blockSize, self.parent.y * self.map.blockSize, self.itemName, 1 )
-		end
-		if self.inventory then
-			local items = self.inventory:getAllItems( )
-			local t = { }
-			for k, v in pairs( items ) do
-				table.insert( t, { name = k, count = v } )
-			end
-			self.map:dropItem( self.parent.x * self.map.blockSize, self.parent.y * self.map.blockSize, t )
-		end
-	end;
 	
 	t.event = function( self, dir, event, ... )
 		local data = { ... }
@@ -42,7 +34,7 @@ game.engine.block.create = function( )
 				for k, v in pairs( items ) do
 					table.insert( t, { name = k, count = v } )
 				end
-				self.map:dropItem( self.parent.x, self.parent.y, t )
+				self.parent.parent:dropItem( self.parent.x, self.parent.y, t )
 			end
 		end
 	end
@@ -50,8 +42,8 @@ game.engine.block.create = function( )
 	t.render = function( self, x, y )
 		if game.data.Blocks[self.name] and not self.transparent then
 			local x, y = x or self.parent.x, y or self.parent.y
-			x = x + ( self.xdirection == "right" and self.map.blockSize or 0 )
-			y = y + ( self.ydirection == "up" and self.map.blockSize or 0 )
+			x = x + ( self.xdirection == "right" and self.parent.parent.blockSize or 0 )
+			y = y + ( self.ydirection == "up" and self.parent.parent.blockSize or 0 )
 			if not game.data.Blocks[self.name].Texture then
 				error( "Could not find texture for "..self.name )
 			end
@@ -86,6 +78,7 @@ game.engine.block.create = function( )
 		return game.data.Blocks[self.name].Texture.collisionMap[x or self.xdirection][y or self.ydirection]
 	end
 	t.setType = function( self, type )
+		blocks[type] = self
 		self.name = type
 		self.itemName = type
 		self:setData( game.data.Blocks[type] )
@@ -117,7 +110,7 @@ game.engine.block.create = function( )
 		return false
 	end
 	t.getRealXY = function( self )
-		return self.parent.x * self.map.blockSize, self.parent.y * self.map.blockSize
+		return self.parent.x * self.parent.parent.blockSize, self.parent.y * self.parent.parent.blockSize
 	end
 	return t
 end

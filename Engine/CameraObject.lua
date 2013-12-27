@@ -8,6 +8,7 @@ game.engine.camera.create = function( )
 	t.majorType = "Camera"
 	t.smoothLighting = false
 	t.useCanvas = false
+	t.useLighting = true
 
 	t.move = function( self, x, y )
 		self.x, self.y = x, y
@@ -51,10 +52,10 @@ game.engine.camera.create = function( )
 					local distance = math.sqrt( ( rx - self.x ) ^ 2 + ( ry - self.y ) ^ 2 )
 					local rd = distance - maxdistance / 2
 					local scaler = math.min( math.max( 0, 1 - ( rd / ( maxdistance / 2 ) ) / 2 ), 1 )
-					if not dist then scaler = 1 end
+					if not distance then scaler = 1 end
 					local light = map.blocks[x][y].light
 					local level = math.max( map.blocks[x][y]:getLightLevel( ), 1 )
-					if not self.smoothLighting then
+					if not self.smoothLighting and self.useLighting then
 						love.graphics.setColor( level * scaler * 17 * light.red, level * scaler * 17 * light.green, level * scaler * 17 * light.blue )
 					end
 					map.blocks[x][y].block:render( rx, ry, map )

@@ -143,7 +143,7 @@ function love.load( )
 				if not colliding then
 					for i = 1,#game.world:getMapByID( ).entities do
 						if game.world:getMapByID( ).entities[i] ~= game.player then
-							if game.physics.collisionY( -5, game.player, game.world:getMapByID( ).entities[i] ) then
+							if game.physics.collisionY( -3, game.player, game.world:getMapByID( ).entities[i] ) then
 								colliding = true
 								break
 							end

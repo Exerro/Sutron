@@ -11,9 +11,9 @@ block.render = function( self, x, y, map )
 		love.graphics.draw( grass, x, y )
 	end
 	if map.blocks[self.parent.x+1] and ( map.blocks[self.parent.x+1][self.parent.y].block.transparent or not map.blocks[self.parent.x+1][self.parent.y].block.solid ) then
-		love.graphics.draw( grass, x + self.map.blockSize, y, math.pi * 0.5 )
+		love.graphics.draw( grass, x + self.parent.parent.blockSize, y, math.pi * 0.5 )
 	end
 	if map.blocks[self.parent.x-1] and ( map.blocks[self.parent.x-1][self.parent.y].block.transparent or not map.blocks[self.parent.x-1][self.parent.y].block.solid ) then
-		love.graphics.draw( grass, x, y + self.map.blockSize, math.pi * 1.5 )
+		love.graphics.draw( grass, x, y + self.parent.parent.blockSize, math.pi * 1.5 )
 	end
 end;

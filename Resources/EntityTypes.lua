@@ -9,15 +9,14 @@ game.resource.entity.newPlayer = function( )
 	ent.camera:linkTo( ent )
 	ent.onCollision = function( self, other, data )
 		if other.type == "Block" then
-			self:moveBack( )
 			if data == "X" then
 				if not game.physics.collisionY( 4, self, other ) then
 					self:applyVelocity( 0, -self.map.gravity * 2 )
 				end
-				self.xv = 0
 			elseif data == "Y" then
 				self.yv = 0
 			end
+			self:moveBack( )
 		end
 	end
 	ent.entityType = "Player"
