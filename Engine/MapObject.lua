@@ -305,9 +305,14 @@ game.engine.map.create = function( )
 		return block
 	end
 
-	map.hitBlock = function( self, x, y, damage )
+	map.hitBlock = function( self, x, y, damage, ... )
 		if not self.blocks[x] or not self.blocks[x][y] then return false end
+		local data = { ... }
+		if #data == 1 and type( data[1] ) == "table" then data = data[1] end -- for if you pass in a table
 		local block = self.blocks[x][y].block
+		if block.event then
+			map:blockUpdate( x, y, "Damage", "Damage", damage, data )
+		end
 		if block:addDamage( damage ) then
 			self:breakBlock( x, y )
 		end
@@ -502,7 +507,7 @@ game.engine.map.create = function( )
 	
 	map.applyGravity = function( self )
 		for i = 1,#self.entities do
-			self.entities[i]:applyVelocity( 0, self.gravity )
+			self.entities[i]:applyVelocity( 0, self.gravity * self.entities[i].weight )
 			self.entities[i]:update( "y" )
 			self.entities[i]:isCollidingWithMap( self, "Y", true )
 		end
@@ -512,7 +517,7 @@ game.engine.map.create = function( )
 		ent:update( "x", dt )
 		ent:isCollidingWithMap( self, "X" )
 		if grav then
-			ent:applyVelocity( 0, self.gravity )
+			ent:applyVelocity( 0, self.gravity * ent.weight )
 		end
 		ent:update( "y", dt )
 		ent:isCollidingWithMap( self, "Y", grav )

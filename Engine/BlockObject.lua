@@ -14,6 +14,7 @@ game.engine.block.create = function( )
 
 	t.damage = 0
 	t.maxDamage = 1
+	t.density = 1
 
 	t.xdirection = "left"
 	t.ydirection = "down"
@@ -78,23 +79,36 @@ game.engine.block.create = function( )
 		return game.data.Blocks[self.name].Texture.collisionMap[x or self.xdirection][y or self.ydirection]
 	end
 	t.setType = function( self, type )
-		blocks[type] = self
 		self.name = type
 		self.itemName = type
 		self:setData( game.data.Blocks[type] )
 		if self.load then
 			self:load( )
 		end
+		if not blocks[type] then
+			blocks[type] = game.engine.block.create( )
+			blocks[type].name = type
+			blocks[type].itemName = type
+			blocks[type]:setData( game.data.Blocks[type] )
+			if blocks[type].load then
+				blocks[type]:load( )
+			end
+		end
 	end
 	t.setData = function( self, t )
-		if not t["BlockData"] then return end
-		local data = t.BlockData
-		local env = { }
-		env.block = self
-		env.game = game
-		setmetatable( env, { __index = getfenv( ) } )
-		setfenv( data, env )
-		data( )
+		if t["BlockData"] then
+			local data = t.BlockData
+			local env = { }
+			env.block = self
+			env.game = game
+			setmetatable( env, { __index = getfenv( ) } )
+			setfenv( data, env )
+			data( )
+		elseif type( t ) == "table" then
+			for k, v in pairs( t ) do
+				self[k] = v
+			end
+		end
 	end
 	t.setParent = function( self, parent )
 		self.parent = parent or self.parent

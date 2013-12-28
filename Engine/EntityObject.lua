@@ -11,6 +11,7 @@ game.engine.entity.create = function( )
 	t.xfriction = 0.94
 	t.yfriction = 0.96
 	t.tvel = 20
+	t.weight = 1
 
     t.w, t.h = 1, 1
 
@@ -45,12 +46,6 @@ game.engine.entity.create = function( )
 			end
 		end
     end
-	
-	t.setAnimation = function( self, an )
-		if an == self.animationSel then return end
-		self.animationSel = an
-		self.frame = 1
-	end
 	
 	t.renderCollisionMap = function( self )
 		if not self.ci[self.animationSel][self.frame] or not self.ci[self.animationSel][self.frame][self.xdirection][self.ydirection] then
@@ -101,13 +96,23 @@ game.engine.entity.create = function( )
 		self.ci[name] = { [1] = { left = { }, right = { } } }
 	end
 	
+	t.setAnimation = function( self, an )
+		if an == self.animationSel then return end
+		self.animationSel = an
+		self.frame = 1
+	end
+	
 	t:newAnimation( "Default" )
 
-    t.setHealth = function( self, health )
-    	self.health = health
+    t.setHealth = function( self, health, s )
+		if not s then
+			self.health = health
+		else
+			self.health = self.health + health
+		end
     	if self.health <= 0 and self.onDeath then
     		self:onDeath( )
-    	else
+    	elseif self.health <= 0 then
     		self.alive = false
     	end
     end
@@ -127,10 +132,16 @@ game.engine.entity.create = function( )
 		elseif mode ~= "set" then
 			error( "Unsupported movement mode: "..tostring( mode )..", use \"set\" or \"add\"" )
 		end
+		if self.event then
+			self:event( "MoveBefore", x, y )
+		end
 		self.ox, self.oy = self.x, self.y
 		self.x, self.y = math.round( x ), math.round( y )
 		if self.link and self.link.move then
 			self.link:move( self.x, self.y )
+		end
+		if self.event then
+			self:event( "MoveAfter", x, y )
 		end
     end
     
@@ -141,8 +152,8 @@ game.engine.entity.create = function( )
     t.applyVelocity = function( self, x, y )
         self.xv = self.xv + ( x or 0 )
         self.yv = self.yv + ( y or 0 )
-        if math.abs( self.xv ) < 0.1 then self.xv = 0 end
-        if math.abs( self.yv ) < 0.1 then self.yv = 0 end
+        if math.abs( self.xv ) < 0.005 then self.xv = 0 end
+        if math.abs( self.yv ) < 0.005 then self.yv = 0 end
 		if math.abs( self.xv ) > self.tvel then
 			self.xv = self.xv < 0 and -self.tvel or self.tvel
 		end

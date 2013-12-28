@@ -57,10 +57,10 @@ local overworld_biomes = {
 		mxd = 30;
 		mnd = 10;
 		underground = standardUndergroundSpawn;
-		structures = { { name = "Tree", spacing = 3, } };
+		structures = { };
 	};
 	Quarry = {
-		cover = "Chalk:4,Stone:1";
+		cover = "Dirt:1,Chalk:6,Stone:1";
 		mxh = 140;
 		mnh = 110;
 		mxg = 1;

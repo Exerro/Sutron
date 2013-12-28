@@ -23,6 +23,8 @@ require "Engine/BlockObject"
 require "Engine/EntityObject"
 require "Engine/CameraObject"
 require "Engine/MapObject"
+require "Engine/TileMapObject"
+require "Engine/Structure"
 
 require "Resources/InventoryTypes"
 require "Resources/EntityTypes"
@@ -184,10 +186,11 @@ function love.load( )
 	g.render = function( )
 		game.player.camera[game.func]( game.player.camera, game.world:getMapByID( ), dist )
 		game.player.hotbar:renderItem( )
-		love.graphics.print( game.player.camera.x..", "..game.player.camera.y, 1, 1 )
-		love.graphics.print( ( math.floor( ( game.player.camera.x + 1 ) / 32 ) )..", "..( math.floor( ( game.player.camera.y + 1 ) / 32 ) + 1 ), 1, 21 )
-		love.graphics.print( game.renderdata, 1, 61 )
-		love.graphics.print( love.timer.getFPS( ), 1, 41 )
+		love.graphics.print( "Camera: "..game.player.camera.x..", "..game.player.camera.y, 1, 1 )
+		love.graphics.print( "Camera block: "..( math.floor( ( game.player.camera.x + 1 ) / 32 ) )..", "..( math.floor( ( game.player.camera.y + 1 ) / 32 ) + 1 ), 1, 21 )
+		love.graphics.print( "Renderdata: "..game.renderdata, 1, 41 )
+		love.graphics.print( "FPS: "..love.timer.getFPS( ), 1, 61 )
+		love.graphics.print( "#Entities: "..#game.world:getMapByID( ).entities, 1, 81 )
 		local bx, by = game.player.camera:getClickPosition( love.mouse.getPosition( ) )
 		local x, y = bx * game.world:getMapByID( ).blockSize - game.player.camera.x, by * game.world:getMapByID( ).blockSize - game.player.camera.y
 		local x = x + ( love.graphics.getWidth( ) / 2 - game.player.w / 2 )

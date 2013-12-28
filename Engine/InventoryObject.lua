@@ -345,7 +345,7 @@ game.engine.inventory.createHotbar = function( )
 		if item then
 			item:useInMap( map, x, y, xd, yd, self )
 		elseif self.slots[self.selection].data.item.name == "empty" or self.slots[self.selection].data.item.count == 0 then
-			map:breakBlock( x, y )
+			map:hitBlock( x, y, 1, "Hand" )
 		end
 	end
 	

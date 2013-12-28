@@ -37,10 +37,12 @@ game.engine.item.create = function( )
 		elseif self.type == "Tool" then
 			local block = map.blocks[x] and map.blocks[x][y] and map.blocks[x][y].block or false
 			if block then
-				if block.type ~= "Air" and block.blockType == self.toolType then
-					map:hitBlock( x, y, self.toolSpeed )
-				elseif block.type ~= "Air" then
-					map:hitBlock( x, y )
+				if block.type ~= "Air" then
+					local ts = self.toolTargetDensity or 1
+					local td = self.toolTargetDamage or 1
+					local speed = td / math.abs( ts - block.density )
+					if speed > block.maxDamage then speed = block.maxDamage end
+					map:hitBlock( x, y, speed, self )
 				end
 			end
 		end
