@@ -50,7 +50,7 @@ game.engine.camera.create = function( )
 					local rx, ry = map.blocks[x][y].block:getRealXY( )
 					local maxdistance = math.sqrt( ( w / 2 * map.blockSize ) ^ 2 + ( h / 2 * map.blockSize ) ^ 2 )
 					local distance = math.sqrt( ( rx - self.x ) ^ 2 + ( ry - self.y ) ^ 2 )
-					local rd = distance - maxdistance / 2
+					local rd = distance - maxdistance * 0.6
 					local scaler = math.min( math.max( 0, 1 - ( rd / ( maxdistance / 2 ) ) / 2 ), 1 )
 					if not dist then scaler = 1 end
 					local light = map.blocks[x][y].light
@@ -77,18 +77,14 @@ game.engine.camera.create = function( )
 		love.graphics.setColor( 255, 255, 255 )
 		for i = 1,#map.entities do
 			local rx, ry = map.entities[i].x, map.entities[i].y
-			local maxdistance = math.sqrt( ( w / 2 * map.blockSize ) ^ 2 + ( h / 2 * map.blockSize ) ^ 2 )
-			local distance = math.sqrt( ( rx - self.x ) ^ 2 + ( ry - self.y ) ^ 2 )
-			local rd = distance - maxdistance / 2
-			local scaler = math.min( math.max( 0, 1 - ( rd / ( maxdistance / 2 ) ) / 2 ), 1 )
-			if not dist then scaler = 1 end
-			local x, y = math.floor( ( self.x + 1 ) / map.blockSize ), math.floor( ( self.y + 1 ) / map.blockSize )
-			local light, level = { red = 1, green = 1, blue = 1 }, 1
+			local x, y = math.round( ( rx + 1 ) / map.blockSize ), math.round( ( ry + 1 ) / map.blockSize )
 			if map.blocks[x] and map.blocks[x][y] then
-				light = map.blocks[x][y].light
-				level = math.max( map.blocks[x][y]:getLightLevel( ), 1 )
+				local light = map.blocks[x][y].light
+				local level = math.max( map.blocks[x][y]:getLightLevel( ), 1 )
+				if not self.smoothLighting and self.useLighting then
+					love.graphics.setColor( level * 17 * light.red, level * 17 * light.green, level * 17 * light.blue )
+				end
 			end
-			love.graphics.setColor( level * scaler * 17 * light.red, level * scaler * 17 * light.green, level * scaler * 17 * light.blue )
 			map.entities[i]:render( )
 		end
 		love.graphics.translate( xo, yo )
