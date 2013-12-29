@@ -27,7 +27,11 @@ game.physics.collisionBERR = function( entity, blockx, blocky )
 end
 
 game.physics.collisionPM = function( x, y, xo, yo, m )
-	return m[y-yo] and m[y-yo][x-xo]
+	if m then
+		return m[y-yo] and m[y-yo][x-xo]
+	else
+		return false
+	end
 end
 
 game.physics.collisionMM = function( m1, m2, xo, yo, xs, ys, xl, yl )

@@ -1,1 +1,1 @@
-item.useInMap = function( self, map, x, y )	local m = map.world:changeMap( "add" )	map.world:changeEntityMap( map, game.player, map.world:getMapByID( m ) )	game.player:move( "set", x * map.blockSize, y * map.blockSize )end
+item.useInMap = function( self, map, x, y )	local x = math.floor( x / map.blockSize )	local y = math.floor( y / map.blockSize )	local m = map.world:changeMap( "add" )	map.world:changeEntityMap( map, game.player, map.world:getMapByID( m ) )	game.player:move( "set", x * map.blockSize, y * map.blockSize )end

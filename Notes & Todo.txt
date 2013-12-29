@@ -1,0 +1,16 @@
+
+Remake the whole structure system
+	It should literally just use the structure resource/feature
+	In the map, there should just be if structure:canSpawn( ... ) then dostuff
+	
+	Pretty much done, just need to make some tweaks with the height limitations that structures can give
+
+Add explosions
+	Break blocks
+	Push entities
+
+Add particle effects
+	Sparkles and stuff
+	Use pixels with velocity, size, intensity and colour/image
+	Can add these to explosions too :)
+	

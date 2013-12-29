@@ -54,7 +54,7 @@ game.engine.block.create = function( )
 	t.renderCollisionMap = function( self, x, y )
 		if not self.solid then return end
 		if not self.ci then
-			local idata = love.image.newImageData( self.map.blockSize, self.map.blockSize )
+			local idata = love.image.newImageData( self.parent.parent.blockSize, self.parent.parent.blockSize )
 			local map = self:getCollisionMap( "left", "down" )
 			for y = 1,#map do
 				for x = 1,#map[y] do
@@ -68,8 +68,8 @@ game.engine.block.create = function( )
 			self.ci = love.graphics.newImage( idata )
 		end
 		local x, y = x or self.parent.x, y or self.parent.y
-		x = x + ( self.xdirection == "right" and self.map.blockSize or 0 )
-		y = y + ( self.ydirection == "up" and self.map.blockSize or 0 )
+		x = x + ( self.xdirection == "right" and self.parent.parent.blockSize or 0 )
+		y = y + ( self.ydirection == "up" and self.parent.parent.blockSize or 0 )
 		love.graphics.draw( self.ci, x, y, 0, self.xdirection == "right" and -1 or 1, self.ydirection == "up" and -1 or 1 )
 	end
 	t.getCollisionMap = function( self, x, y )

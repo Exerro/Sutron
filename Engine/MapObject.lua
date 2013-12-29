@@ -51,17 +51,19 @@ game.engine.map.create = function( )
 	
 	map.updaters = { }
 	map.update = function( self )
-		for i = 1,#self.updaters do
-			self.updaters[i]:func( )
+		for i = #self.updaters, 1, -1 do
+			if self.updaters[i] then
+				self.updaters[i]:func( )
+			end
 		end
 	end
 	map.newUpdater = function( self, func, parent )
-		table.insert( self.updaters, { func = func, parent = parent, index = #self.updaters } )
+		table.insert( self.updaters, { func = func, parent = parent } )
 		return self.updaters, #self.updaters
 	end
 	map.removeUpdater = function( self, n )
 		if type( n ) == "table" then
-			for i = n.index, 1, -1 do
+			for i = 1, #self.updaters do
 				if self.updaters[i] == n then
 					n = i
 					break
@@ -124,8 +126,8 @@ game.engine.map.create = function( )
 					if self.parent.blocks[xx][yy] then
 						local distance = math.sqrt( ( x - xx ) ^ 2 + ( y - yy ) ^ 2 )
 						if distance < r then
-							local p = l / r
-							local level = l - distance * p
+							local ratio = 1 - ( distance / r )
+							local level = ratio * l
 							if level < self.min then level = self.min end
 							if level > self.max then level = self.max end
 							local l = { level = level, red = light.red or 1, blue = light.blue or 1, green = light.green or 1, light = light }
@@ -163,7 +165,11 @@ game.engine.map.create = function( )
 		local block = { }
 		block.type = "BlockTracker"
 		block.block = game.engine.block.create( )
-		block.block:setType( name )
+		if type( name ) == "string" then
+			block.block:setType( name )
+		elseif type( name ) == "table" then
+			block.block:setData( name )
+		end
 		block.block:setParent( block )
 		block.parent = self
 		block.x = x
@@ -327,22 +333,28 @@ game.engine.map.create = function( )
 	
 	map.generation.data.left = {
 		x = 0;
+		dir = "left"; -- for the structure generation
 		biome = "Plains";
 		tobiome = "Something";
 		changing = false;
 		height = 100;
 		toheight = 100;
 		distance = 0;
+		structures = { };
+		sdata = { };
 		data = { };
 	}
 	map.generation.data.right = {
 		x = 1;
+		dir = "right";
 		biome = "Plains";
 		tobiome = "Tundra";
 		changing = false;
 		height = 100;
 		toheight = 100;
 		distance = 0;
+		structures = { };
+		sdata = { };
 		data = { };
 	}
 	map.generation.data.lights = { }
@@ -350,9 +362,13 @@ game.engine.map.create = function( )
 	map.generation.parent = map
 	map.generation.newBiomeChance = 40 -- 1 in 40 ( I think )
 	map.generation.biomes = { }
+	map.generation.structures = { }
 	
 	map.generation.addBiomeType = function( self, name, t )
 		self.biomes[name] = loadBiome( t )
+	end
+	map.generation.addStructureType = function( self, name, struct )
+		self.structures[name] = struct
 	end
 	
 	map.generation.getNewOre = function( self, dir )
@@ -393,7 +409,6 @@ game.engine.map.create = function( )
 				found = true
 			end
 		end
-		--Structures?
 		return column
 	end
 	
@@ -407,11 +422,27 @@ game.engine.map.create = function( )
 		self.parent:setRandomSeed( self.data[dir].x )
 		local biome = self.biomes[self.data[dir].biome]
 		local n = math.random( biome.mng, biome.mxg )
+		local height
 		if self.data[dir].height > self.data[dir].toheight then
-			return self.data[dir].height - n
+			height = self.data[dir].height - n
+			if height < self.data[dir].toheight then
+				height = self.data[dir].toheight
+			end
 		else
-			return self.data[dir].height + n
+			height = self.data[dir].height + n
+			if height > self.data[dir].toheight then
+				height = self.data[dir].toheight
+			end
 		end
+		for i = 1,#self.biomes[self.data[dir].biome].structures do
+			local name = self.biomes[self.data[dir].biome].structures[i].name
+			local struct = self.structures[name]
+			local h = struct:checkHeightChange( height, self.data[dir], dir )
+			if h > height then
+				height = h
+			end
+		end
+		return height
 	end
 	
 	map.generation.canChangeBiome = function( self, dir )
@@ -435,6 +466,17 @@ game.engine.map.create = function( )
 			bs[count] = k
 		end
 		return bs[math.random( 1, count )]
+	end
+	map.generation.spawnStructures = function( self, dir )
+		if #self.biomes[self.data[dir].biome].structures < 1 then return end
+		for i = 1,#self.biomes[self.data[dir].biome].structures do
+			local name = self.biomes[self.data[dir].biome].structures[i].name
+			local struct = self.structures[name]
+			if struct:spawn( self.data[dir], self.biomes[self.data[dir].biome].structures[i].data, dir ) then
+				-- it spawned the structure
+				game.renderdata = "Spawned a "..name.." in the map at "..love.timer.getTime( )
+			end
+		end
 	end
 	
 	map.generation.newColumn = function( self, dir )
@@ -474,14 +516,64 @@ game.engine.map.create = function( )
 		self.parent.blocks[self.data[dir].x] = { }
 		self.parent.blocks[self.data[dir].x].lastAir = col.lastAir
 		self.parent.blocks[self.data[dir].x].biome = self.data[dir].biome
+
+		-- Structure generation
+		self:spawnStructures( dir )
+		for i = 1,#self.data[dir].structures do
+			local offset = self.data[dir].x - self.data[dir].structures[i].x + 1
+			self.data[dir].structures[i].tileMap:generate( col, self.data[dir].structures[i].y, offset )
+		end
+		
+		-- Removing finished structures
+		for i = #self.data[dir].structures, 1, -1 do
+			local s = self.data[dir].structures[i]
+			local remove = false
+			if dir == "right" then
+				if s.x + s.w <= self.data[dir].x then
+					remove = true
+				end
+			else
+				if self.data[dir].x <= s.x then
+					remove = true
+				end
+			end
+			if remove then
+				-- remove the structure generator
+				local p = s.parent
+				for i = 1,#p.spawned do
+					if p.spawned[i] == s then
+						table.remove( p.spawned, i )
+						break
+					end
+				end
+				table.remove( self.data[dir].structures, i )
+			end
+		end
+		
+		-- Loading the column into the map
 		for y = 1,#col do
 			self.parent.blocks[self.data[dir].x][y] = self.parent:newBlock( self.data[dir].x, y, col[y] )
 		end
 		
+		-- Last air update
+		for y = 1,#col do
+			if self.parent.blocks[self.data[dir].x][y].block.solid then
+				self.parent.blocks[self.data[dir].x].lastAir = y - 1
+				break
+			end
+		end
+		
+		-- Apply lighting
+		for y = 1,#col do
+			if self.parent.blocks[self.data[dir].x][y].block.lightSource then
+				self.parent.lighting:applyLighting( self.data[dir].x, y, self.parent.blocks[self.data[dir].x][y].block.lightSource )
+			end
+		end
+
 		-- X update
 		self.data[dir].x = self.data[dir].x + ( dir == "left" and -1 or 1 )
 	end
-	
+
 	map.load = function( self, biome, lb, rb )
 		self.load = nil
 		local biome = biome or self.generation:selectNewBiome( "left" )

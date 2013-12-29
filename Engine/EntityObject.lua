@@ -162,6 +162,10 @@ game.engine.entity.create = function( )
 		end
     end
 	
+	t.getSpeed = function( self )
+		return math.sqrt( self.xv ^ 2 + self.yv ^ 2 )
+	end
+	
 	t.updateVelocity = function( self )
 		self.xv = self.xv * self.xfriction
 		self.yv = self.yv * self.yfriction
@@ -184,6 +188,21 @@ game.engine.entity.create = function( )
 		self.h = h
 	end
 	
+	t.pushFrom = function( self, other, xscaler, yscaler )
+		local xscaler = xscaler or 1
+		local selfcx = self.x + self.w / 2
+		local selfcy = self.y + self.h / 2
+		local othercx = other.x + other.w / 2
+		local othercy = other.y + other.h / 2
+		local diffx = selfcx - othercx
+		local diffy = selfcy - othercy
+		if math.abs( diffx ) < math.abs( diffy ) then
+			self:applyVelocity( xscaler / diffx, 0 )
+		else
+			self:applyVelocity( 0, ( yscaler or xscaler ) / diffy )
+		end
+	end
+	
 	t.isColliding = function( self, other )
 		local ent = other
 		if other.type == "Block" then
@@ -204,6 +223,7 @@ game.engine.entity.create = function( )
 		if not col then return false, "Rectangle" end
 		return true, x, y
 	end	
+	
 	t.isCollidingWithMap = function( self, map, data )
 		local map = self.map or map
 		local selfx, selfy = math.floor( self.x / map.blockSize ), math.floor( self.y / map.blockSize )

@@ -1,5 +1,6 @@
 
-create = function( )
+game.engine.tilemap = { }
+game.engine.tilemap.create = function( )
 	local m = { }
 	m.type = "TileMap"
 	m.map = { }
@@ -82,14 +83,18 @@ create = function( )
 					error( map[x][y].data )
 				end
 				map[x][y].data = data
-				local block = game.engine.block.create( )
-				block:setType( map[x][y].name )
-				block:setData( map[x][y].data )
-				map[x][y] = block
+				if map[x][y].name ~= "Empty" then
+					local block = game.engine.block.create( )
+					block:setType( map[x][y].name )
+					block:setData( map[x][y].data )
+					map[x][y] = block
+				else
+					map[x][y] = false
+				end
 			end
 		end
 		self.map = map
-		return true
+		return map
 	end
 	m.loadFromFile = function( self, path )
 		if love.filesystem.exists( path ) then
@@ -107,9 +112,13 @@ create = function( )
 		if m then
 			x = x - m
 		end
-		if not self.map[x] then return false end
-		for yy = y, #self.map[x] do
-			col[yy] = self.map[x][yy-y+1]
+		if not self.map[x] then 
+			return false
+		end
+		for yy = y, y + #self.map[x] - 1 do
+			if self.map[x][yy-y+1] then
+				col[yy] = self.map[x][yy-y+1]
+			end
 		end
 		return true
 	end

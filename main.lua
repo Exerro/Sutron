@@ -28,6 +28,7 @@ require "Engine/Structure"
 
 require "Resources/InventoryTypes"
 require "Resources/EntityTypes"
+require "Resources/Structures"
 require "Resources/Biomes"
 require "Resources/World"
 require "Resources/BlockUpdateMethods"
@@ -184,19 +185,24 @@ function love.load( )
 	end
 	
 	g.render = function( )
-		game.player.camera[game.func]( game.player.camera, game.world:getMapByID( ), dist )
+		local map = game.world:getMapByID( )
+		game.player.camera[game.func]( game.player.camera, map, dist )
 		game.player.hotbar:renderItem( )
 		love.graphics.print( "Camera: "..game.player.camera.x..", "..game.player.camera.y, 1, 1 )
-		love.graphics.print( "Camera block: "..( math.floor( ( game.player.camera.x + 1 ) / 32 ) )..", "..( math.floor( ( game.player.camera.y + 1 ) / 32 ) + 1 ), 1, 21 )
+		love.graphics.print( "Camera block: "..( math.floor( ( game.player.camera.x + 1 ) / map.blockSize ) )..", "..( math.floor( ( game.player.camera.y + 1 ) / map.blockSize ) + 1 ), 1, 21 )
 		love.graphics.print( "Renderdata: "..game.renderdata, 1, 41 )
 		love.graphics.print( "FPS: "..love.timer.getFPS( ), 1, 61 )
-		love.graphics.print( "#Entities: "..#game.world:getMapByID( ).entities, 1, 81 )
+		love.graphics.print( "#Entities: "..#map.entities, 1, 81 )
+		love.graphics.print( "#Updaters: "..#map.updaters, 1, 101 )
+		if map.blocks[math.floor( ( game.player.camera.x + 1 ) / map.blockSize )] then
+			love.graphics.print( "Current biome: "..map.blocks[math.floor( ( game.player.camera.x + 1 ) / map.blockSize )].biome, 1, 121 )
+		end
 		local bx, by = game.player.camera:getClickPosition( love.mouse.getPosition( ) )
-		local x, y = bx * game.world:getMapByID( ).blockSize - game.player.camera.x, by * game.world:getMapByID( ).blockSize - game.player.camera.y
+		local x, y = bx * map.blockSize - game.player.camera.x, by * map.blockSize - game.player.camera.y
 		local x = x + ( love.graphics.getWidth( ) / 2 - game.player.w / 2 )
 		local y = y + ( love.graphics.getHeight( ) / 2 - game.player.h / 2 )
 		love.graphics.setColor( 255, 255, 0, 30 )
-		love.graphics.rectangle( "fill", x, y, game.world:getMapByID( ).blockSize, game.world:getMapByID( ).blockSize )
+		love.graphics.rectangle( "fill", x, y, map.blockSize, map.blockSize )
 		love.graphics.setColor( 255, 255, 255 )
 	end
 end

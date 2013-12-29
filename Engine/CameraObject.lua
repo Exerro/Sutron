@@ -147,7 +147,9 @@ game.engine.camera.create = function( )
 		end
 		local cx, cy = love.graphics.getWidth( ) / 2, love.graphics.getHeight( ) / 2
 		local x, y = self.x + ( ox - cx ) + self.w / 2, self.y + ( oy - cy ) + self.h / 2
-		return math.floor( x / self.map.blockSize ), math.floor( y / self.map.blockSize ), ox + self.w / 2 < cx and "right" or "left", oy + self.h / 2 < cy and "up" or "down"
+		local xr = ox > cx + self.w / 2 and "right" or ox < cx - self.w / 2 and "left" or "none"
+		local yr = oy > cy + self.h / 2 and "down" or oy < cy - self.h / 2 and "up" or "none"
+		return x, y, xr, yr
 	end
 	
 	return t

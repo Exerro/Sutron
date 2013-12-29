@@ -11,7 +11,7 @@ local overworld_biomes = {
 		mxg = 1; -- max gradient
 		mng = 0; -- min gradient
 		mxd = 30; -- max distance
-		mnd = 10; -- min distance
+		mnd = 20; -- min distance
 		underground = standardUndergroundSpawn; -- block:probability
 		structures = { };
 	};
@@ -22,7 +22,7 @@ local overworld_biomes = {
 		mxg = 2;
 		mng = 0;
 		mxd = 30;
-		mnd = 10;
+		mnd = 20;
 		underground = standardUndergroundSpawn;
 		structures = { };
 	};
@@ -33,7 +33,7 @@ local overworld_biomes = {
 		mxg = 4;
 		mng = 2;
 		mxd = 30;
-		mnd = 10;
+		mnd = 20;
 		underground = standardUndergroundSpawn;
 		structures = { };
 	};
@@ -44,7 +44,7 @@ local overworld_biomes = {
 		mxg = 1;
 		mng = 0;
 		mxd = 30;
-		mnd = 10;
+		mnd = 20;
 		underground = standardUndergroundSpawn;
 		structures = { };
 	};
@@ -55,7 +55,7 @@ local overworld_biomes = {
 		mxg = 2;
 		mng = 0;
 		mxd = 30;
-		mnd = 10;
+		mnd = 20;
 		underground = standardUndergroundSpawn;
 		structures = { };
 	};
@@ -66,7 +66,7 @@ local overworld_biomes = {
 		mxg = 1;
 		mng = 0;
 		mxd = 30;
-		mnd = 10;
+		mnd = 20;
 		underground = standardUndergroundSpawn;
 		structures = { };
 	};
@@ -77,14 +77,16 @@ local overworld_biomes = {
 		mxg = 2;
 		mng = 0;
 		mxd = 30;
-		mnd = 10;
+		mnd = 20;
 		underground = standardUndergroundSpawn;
 		structures = { 
 			[1] = {
-				name = "Tree";
-				data = { }; -- structure data not spawn data
-				spacing = { min = 1, max = 5 }; -- leave either/both nil to have no limit
-				spawnchance = "1:5"; -- Both must be integers, so not "1:5.3", because that would be the same as "1:5". You can use math operators like *
+				name = "Lake";
+				minspacing = 1;
+				maxspacing = false;
+				data = {
+					
+				};
 			};
 		};
 	};
@@ -107,8 +109,15 @@ local underworld_biomes = {
 game.resource.map = { }
 game.resource.map.newOverworldMap = function( map )
 	local map = map or game.engine.map.create( )
+	local structures = { }
 	for k, v in pairs( overworld_biomes ) do
 		map.generation:addBiomeType( k, game.clone( v ) )
+		for i = 1,#v.structures do
+			structures[v.structures[i].name] = true
+		end
+	end
+	for k, v in pairs( structures ) do
+		map.generation:addStructureType( k, game.resource.structure.get( k ) )
 	end
 	return map
 end

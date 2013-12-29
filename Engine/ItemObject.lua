@@ -18,6 +18,10 @@ game.engine.item.create = function( )
 	i.typeBreakingTimes = { };
 	
 	i.useInMap = function( self, map, x, y, xd, yd )
+		local x = math.floor( x / map.blockSize )
+		local y = math.floor( y / map.blockSize )
+		local xd = xd == "none" and "left" or xd
+		local yd = yd == "none" and "left" or yd
 		if self.type == "Block" then
 			local ok = true
 			for i = 1,#map.entities do
