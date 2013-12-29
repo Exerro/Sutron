@@ -55,7 +55,6 @@ game.resource.entity.newProjectile = function( xspeed, yspeed, w, h )
 	local ent = game.engine.entity.create( )
 	ent:resize( w, h )
 	ent:applyVelocity( xspeed, yspeed )
-	ent.weight = 1
 	ent.entityType = "Projectile"
 	ent.yfriction = 0.99
 	ent.xfriction = 0.99

@@ -24,7 +24,7 @@ require "Engine/EntityObject"
 require "Engine/CameraObject"
 require "Engine/MapObject"
 require "Engine/TileMapObject"
-require "Engine/Structure"
+require "Engine/StructureObject"
 
 require "Resources/InventoryTypes"
 require "Resources/EntityTypes"
@@ -123,19 +123,7 @@ function love.load( )
 				game.player:setAnimation( "Walking" )
 				key = true
 			end
-			if not key then
-				game.player:setAnimation( "Still" )
-			end
-			for i = 1,#game.world:getMapByID( ).entities do
-				game.world:getMapByID( ):moveEntity( game.world:getMapByID( ).entities[i], xc, yc, true, 2 or ev[2] * 60 )
-			end
-		elseif ev[1] == "Mouse" and ev[2] == "Down" and ev[6] == self then
-			local x, y, xd, yd = game.player.camera:getClickPosition( ev[3], ev[4] )
-			if ev[5] == "r" and game.world:getMapByID( ).blocks[x] and game.world:getMapByID( ).blocks[x][y].block.inventory then
-				game.world:getMapByID( ).blocks[x][y].block.inventory:activate( )
-			end
-		elseif ev[1] == "Keyboard" and ev[2] == "Down" then
-			if ev[3] == " " then -- jumping
+			if love.keyboard.isDown( " " ) then
 				local colliding = false
 				local y = math.floor( ( game.player.y + game.player.h ) / game.world:getMapByID( ).blockSize ) -- gets the block that is containing the bottom of the player
 				for x = math.floor( game.player.x / game.world:getMapByID( ).blockSize ), math.floor( game.player.x / game.world:getMapByID( ).blockSize ) + math.ceil( game.player.w / game.world:getMapByID( ).blockSize ) do
@@ -157,7 +145,20 @@ function love.load( )
 				if colliding then
 					game.player:applyVelocity( 0, -8 ) -- if there is a block below, jump
 				end
-			elseif ev[3] == "tab" then
+			end
+			if not key then
+				game.player:setAnimation( "Still" )
+			end
+			for i = 1,#game.world:getMapByID( ).entities do
+				game.world:getMapByID( ):moveEntity( game.world:getMapByID( ).entities[i], xc, yc, true, 2 or ev[2] * 60 )
+			end
+		elseif ev[1] == "Mouse" and ev[2] == "Down" and ev[6] == self then
+			local x, y, xd, yd = game.player.camera:getClickPosition( ev[3], ev[4] )
+			if ev[5] == "r" and game.world:getMapByID( ).blocks[x] and game.world:getMapByID( ).blocks[x][y].block.inventory then
+				game.world:getMapByID( ).blocks[x][y].block.inventory:activate( )
+			end
+		elseif ev[1] == "Keyboard" and ev[2] == "Down" then
+			if ev[3] == "tab" then
 				if game.func == "render" then
 					game.func = "renderCollisionMap"
 				else
