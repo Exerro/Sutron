@@ -1,0 +1,1 @@
+local lastMove = 0block.updater = function( self )	lastMove = game.resource.block.updaters.Gravity.update( self, lastMove )end

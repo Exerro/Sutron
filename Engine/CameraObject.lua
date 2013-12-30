@@ -87,6 +87,9 @@ game.engine.camera.create = function( )
 			end
 			map.entities[i]:render( )
 		end
+		for i = 1,#map.particles do
+			map.particles[i]:render( )
+		end
 		love.graphics.translate( xo, yo )
 		if self.useCanvas then
 			love.graphics.setCanvas( )

@@ -16,6 +16,7 @@ game.resource.entity.newPlayer = function( )
 			elseif data == "Y" then
 				self.yv = 0
 			end
+			self:pushFrom( { x = other.parent.x * other.parent.parent.blockSize, y = other.parent.y * other.parent.parent.blockSize, w = other.parent.parent.blockSize, h = other.parent.parent.blockSize }, 0.3 )
 			self:moveBack( )
 		end
 	end
@@ -43,7 +44,8 @@ game.resource.entity.newItem = function( t )
 			if not other.removeFromMap and other.inventory:addInventory( self.inventory ) then
 				self.removeFromMap = true
 			else
-				self:moveBack( )
+				self:pushFrom( other, self:getSpeed( ) )
+				other:pushFrom( self, other:getSpeed( ) )
 			end
 		end
 	end
@@ -51,32 +53,21 @@ game.resource.entity.newItem = function( t )
 	return ent
 end
 
-game.resource.entity.newProjectile = function( xspeed, yspeed, w, h )
+game.resource.entity.newProjectile = function( angle, speed, w, h )
 	local ent = game.engine.entity.create( )
 	ent:resize( w, h )
-	ent:applyVelocity( xspeed, yspeed )
+	ent:applyRadialVelocity( angle, speed )
 	ent.entityType = "Projectile"
 	ent.yfriction = 0.99
 	ent.xfriction = 0.99
 	ent.onCollision = function( self, other, data )
-		if self:getSpeed( ) < 0.5 then
-			self.removeFromMap = true
-			return
-		end
-		if other.type == "Block" then
-			self:moveBack( )
+		self.removeFromMap = true
+		if other.type == "Block" and self:getSpeed( ) > 1 then
 			local map = other.parent.parent
-			if self:getSpeed( ) > 3 then
-				map:hitBlock( other.parent.x, other.parent.y, self:getSpeed( ) * 3, "Projectile", self )
-				self.xv = self.xv * 0.7
-				self.yv = self.yv * 0.7
-			else
-				self.xv = 0
-				self.yv = 0
-				local o = { }
-				o.x, o.y = other:getRealXY( )
-				o.w, o.h = other.parent.parent.blockSize, other.parent.parent.blockSize
-				self:pushFrom( o, 0.2 )
+			map:hitBlock( other.parent.x, other.parent.y, self:getSpeed( ) * 3, "Projectile", self )
+		elseif other.type == "Entity" then
+			if other.entityType == "Item" then
+				other:applyVelocity( self.xv * 0.1, self.yv * 0.1 )
 			end
 		end
 	end

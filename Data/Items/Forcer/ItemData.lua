@@ -1,0 +1,1 @@
+local time = 0item.useInMap = function( self, map, x, y )	if love.timer.getTime( ) - 0.2 >= time then		map.force:explosion( math.floor( x / map.blockSize ), math.floor( y / map.blockSize ), 5, 3 )		time = love.timer.getTime( )	endend

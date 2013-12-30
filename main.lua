@@ -9,6 +9,7 @@ game.resource = { }
 require "Engine/Utils"
 require "Engine/Physics"
 require "Engine/InterfaceObject"
+require "Engine/Event"
 
 game.interface = game.engine.interface.create( 1, 1, love.graphics.getWidth( ), love.graphics.getHeight( ) )
 game.states = { }
@@ -22,6 +23,7 @@ require "Engine/InventoryObject"
 require "Engine/BlockObject"
 require "Engine/EntityObject"
 require "Engine/CameraObject"
+require "Engine/ParticleObject"
 require "Engine/MapObject"
 require "Engine/TileMapObject"
 require "Engine/StructureObject"
@@ -103,7 +105,7 @@ function love.load( )
 			if not game.world:getMapByID( ).blocks[xr] then
 				game.world:getMapByID( ).generation:newColumn( "right" )
 			end
-			if love.mouse.isDown( "l" ) and love.timer.getTime( ) - lastClickTime > 0.2 then
+			if love.mouse.isDown( "l" ) and love.timer.getTime( ) - lastClickTime > 0.05 then
 				if self:isMouseIn( love.mouse.getPosition( ) ) then
 					local x, y, xd, yd = game.player.camera:getClickPosition( love.mouse.getPosition( ) )
 					game.player.hotbar:useItem( game.world:getMapByID( ), x, y, xd, yd )
@@ -127,7 +129,7 @@ function love.load( )
 				local colliding = false
 				local y = math.floor( ( game.player.y + game.player.h ) / game.world:getMapByID( ).blockSize ) -- gets the block that is containing the bottom of the player
 				for x = math.floor( game.player.x / game.world:getMapByID( ).blockSize ), math.floor( game.player.x / game.world:getMapByID( ).blockSize ) + math.ceil( game.player.w / game.world:getMapByID( ).blockSize ) do
-					if game.world:getMapByID( ).blocks[x][y] and game.physics.collisionY( -5, game.player, game.world:getMapByID( ).blocks[x][y].block ) then -- checks if a block is below the player
+					if game.world:getMapByID( ).blocks[x] and game.world:getMapByID( ).blocks[x][y] and game.physics.collisionY( -5, game.player, game.world:getMapByID( ).blocks[x][y].block ) then -- checks if a block is below the player
 						colliding = true
 						break
 					end
@@ -195,8 +197,10 @@ function love.load( )
 		love.graphics.print( "FPS: "..love.timer.getFPS( ), 1, 61 )
 		love.graphics.print( "#Entities: "..#map.entities, 1, 81 )
 		love.graphics.print( "#Updaters: "..#map.updaters, 1, 101 )
+		love.graphics.print( "#Forces: "..#map.force.constants, 1, 121 )
+		love.graphics.print( "#Particles: "..#map.particles, 1, 141 )
 		if map.blocks[math.floor( ( game.player.camera.x + 1 ) / map.blockSize )] then
-			love.graphics.print( "Current biome: "..map.blocks[math.floor( ( game.player.camera.x + 1 ) / map.blockSize )].biome, 1, 121 )
+			love.graphics.print( "Current biome: "..map.blocks[math.floor( ( game.player.camera.x + 1 ) / map.blockSize )].biome, 1, 161 )
 		end
 		local bx, by = game.player.camera:getClickPosition( love.mouse.getPosition( ) )
 		local x, y = bx * map.blockSize - game.player.camera.x, by * map.blockSize - game.player.camera.y
@@ -208,8 +212,15 @@ function love.load( )
 	end
 end
 
+local startTime = love.timer.getTime( )
+local t = game.engine.event.create( )
+t:setTime( 2 )
+t:setFunction( function( self, time ) game.renderdata = time self:start( ) end )
+t:start( )
+
 function love.update( dt )
 	game.interface.run.update( game.interface, dt )
+	game.engine.event.update( )
 end
 
 function love.keypressed( key, uni )

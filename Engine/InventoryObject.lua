@@ -63,7 +63,6 @@ game.engine.inventory.create = function( )
 			love.graphics.setColor( 255, 255, 255 )
 			love.graphics.print( tostring( self.data.item.count ), self:getX( true ), self:getY( true ) + self:getHeight( ) - 10 )
 			love.graphics.setFont( f )
-			
 		end
 	end
 

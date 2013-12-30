@@ -152,8 +152,6 @@ game.engine.entity.create = function( )
     t.applyVelocity = function( self, x, y )
         self.xv = self.xv + ( x or 0 )
         self.yv = self.yv + ( y or 0 )
-        if math.abs( self.xv ) < 0.005 then self.xv = 0 end
-        if math.abs( self.yv ) < 0.005 then self.yv = 0 end
 		if math.abs( self.xv ) > self.tvel then
 			self.xv = self.xv < 0 and -self.tvel or self.tvel
 		end
@@ -161,6 +159,13 @@ game.engine.entity.create = function( )
 			self.yv = self.yv < 0 and -self.tvel or self.tvel
 		end
     end
+	
+	t.applyRadialVelocity = function( self, angle, vel )
+		local angle = angle / 180 * math.pi
+		local xvel = math.sin( angle ) * vel
+		local yvel = math.cos( angle ) * vel
+		self:applyVelocity( xvel, yvel )
+	end
 	
 	t.getSpeed = function( self )
 		return math.sqrt( self.xv ^ 2 + self.yv ^ 2 )
@@ -188,18 +193,18 @@ game.engine.entity.create = function( )
 		self.h = h
 	end
 	
-	t.pushFrom = function( self, other, xscaler, yscaler )
-		local xscaler = xscaler or 1
+	t.pushFrom = function( self, other, force )
+		local force = force or 1
 		local selfcx = self.x + self.w / 2
 		local selfcy = self.y + self.h / 2
 		local othercx = other.x + other.w / 2
 		local othercy = other.y + other.h / 2
 		local diffx = selfcx - othercx
 		local diffy = selfcy - othercy
-		if math.abs( diffx ) < math.abs( diffy ) then
-			self:applyVelocity( xscaler / diffx, 0 )
-		else
-			self:applyVelocity( 0, ( yscaler or xscaler ) / diffy )
+		if math.sqrt( diffx ^ 2 + diffy ^ 2 ) < math.sqrt( ( other.w / 2 + self.w / 2 ) ^ 2 + ( other.h / 2 + self.h / 2 ) ^ 2 ) then
+			local angle = math.atan2( diffx, diffy )
+			local xv, yv = math.sin( angle ) * force, math.cos( angle ) * force
+			self:applyVelocity( xv, yv )
 		end
 	end
 	

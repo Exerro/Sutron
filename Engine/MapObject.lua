@@ -49,14 +49,20 @@ game.engine.map.create = function( )
 	map.blockCountX = math.ceil( love.graphics.getWidth( ) / map.blockSize )
 	map.blockCountY = math.ceil( love.graphics.getHeight( ) / map.blockSize )
 	
-	map.updaters = { }
-	map.update = function( self )
-		for i = #self.updaters, 1, -1 do
-			if self.updaters[i] then
-				self.updaters[i]:func( )
+	map.particles = { }
+	map.newParticleEffect = function( self, p )
+		table.insert( self.particles, p )
+	end
+	map.updateParticles = function( self )
+		for i = #self.particles, 1, -1 do
+			self.particles[i]:update( )
+			if #self.particles[i].particles < 0 then
+				table.remove( self.particles, i )
 			end
 		end
 	end
+	
+	map.updaters = { }
 	map.newUpdater = function( self, func, parent )
 		table.insert( self.updaters, { func = func, parent = parent } )
 		return self.updaters, #self.updaters
@@ -80,6 +86,131 @@ game.engine.map.create = function( )
 		if type( n ) ~= "number" then return false end
 		table.remove( self.updaters, n )
 		return true
+	end
+	
+	map.force = { }
+	map.force.constants = { }
+	map.force.parent = map
+	
+	map.force.update = function( self )
+		for f = #self.constants, 1, -1 do
+			local applied = false
+			for i = 1,#self.parent.entities do
+				if self.constants[f]:entityRangeCheck( self.parent.entities[i] ) then
+					self.constants[f]:apply( self.parent.entities[i] )
+					applied = true
+				end
+			end
+			if applied then
+				self.constants[f].applies = self.constants[f].applies + 1
+			end
+			if self.constants[f]:updateVelocity( ) then
+				table.remove( self.constants, f )
+			end
+		end
+	end
+	
+	map.force.applyConstantEntityForce = function( self, x, y, w, h, xvel, yvel, xscaler, yscaler, minx, miny )
+		local t = { }
+		t.applies = 0
+		t.xvel = xvel
+		t.yvel = yvel
+		t.xscaler = xscaler or 1
+		t.yscaler = yscaler or 1
+		t.minx = minx or 0.1
+		t.miny = miny or 0.1
+		t.x, t.y = x, y
+		t.w, t.h = w, h
+		t.entityRangeCheck = function( self, entity )
+			local xx = entity.x + entity.w / 2
+			local yy = entity.w + entity.h / 2
+			return xx < self.x + self.w and xx >= self.x and yy < self.y + self.h and yy >= self.y
+		end
+		t.apply = function( self, entity )
+			entity:applyVelocity( self.xvel, self.yvel )
+		end
+		t.updateVelocity = function( self )
+			self.xvel = self.xvel * self.xscaler
+			if math.abs( self.xvel ) < self.minx then
+				self.xvel = 0
+			end
+			self.yvel = self.yvel * self.yscaler
+			if math.abs( self.yvel ) < self.miny then
+				self.yvel = 0
+			end
+			return self.xvel == 0 and self.yvel == 0
+		end
+		table.insert( self.constants, t )
+	end
+	map.force.applyConstantRadialEntityForce = function( self, x, y, r, vel, scaler, minvel )
+		local t = { }
+		t.applies = 0
+		t.vel = vel
+		t.scaler = scaler or 1
+		t.minvel = minvel or 0.1
+		t.x, t.y = x, y
+		t.r = r
+		t.entityRangeCheck = function( self, entity )
+			local xx, yy = entity.x + entity.w / 2, entity.y + entity.h / 2
+			local dist = math.sqrt( ( self.x - xx ) ^ 2 + ( self.y - yy ) ^ 2 )
+			return dist < self.r
+		end
+		t.apply = function( self, entity )
+			local xx, yy = entity.x + entity.w / 2, entity.y + entity.h / 2
+			local dist = math.sqrt( ( self.x - xx ) ^ 2 + ( self.y - yy ) ^ 2 )
+			local ratio = 1 - ( dist / self.r )
+			local angle = math.atan2( xx - self.x, yy - self.y )
+			local xvel = math.sin( angle ) * ratio * self.vel
+			local yvel = math.cos( angle ) * ratio * self.vel
+			entity:applyVelocity( xvel, yvel )
+		end
+		t.updateVelocity = function( self )
+			self.vel = self.vel * self.scaler
+			if math.abs( self.vel ) < self.minvel then
+				self.vel = 0
+			end
+			return self.vel == 0
+		end
+		table.insert( self.constants, t )
+	end
+	map.force.applyEntityVelocityBurst = function( self, x, y, w, h, xvel, yvel )
+		self:applyConstantEntityForce( x, y, w, h, xvel, yvel, 0, 0 )
+	end
+	map.force.applyEntityVelocityWave = function( self, x, y, w, h, xvel, yvel, xscaler, yscaler )
+		self:applyConstantEntityForce( x, y, w, h, xvel, yvel, xscaler, yscaler )
+	end
+	map.force.applyRadialEntityVelocityBurst = function( self, x, y, r, vel )
+		self:applyConstantRadialEntityForce( x, y, r, vel, 0 )
+	end
+	map.force.applyRadialEntityVelocityWave = function( self, x, y, r, vel, scaler )
+		self:applyConstantRadialEntityForce( x, y, r, vel, scaler )
+	end
+	
+	map.force.explosion = function( self, x, y, power, range )
+		for xx = x - range, x + range do
+			for yy = y - range, y + range do
+				local dist = math.sqrt( ( xx - x ) ^ 2 + ( yy - y ) ^ 2 )
+				if dist < range then
+					local ratio = 1 - ( dist / range )
+					self.parent:hitBlock( xx, yy, power * ratio, "Explosion", power, range )
+				end
+			end
+		end
+		self:applyRadialEntityVelocityWave( ( x + 0.5 ) * self.parent.blockSize, ( y + 0.5 ) * self.parent.blockSize, range * map.blockSize, power, 0.9 )
+		local p = game.engine.particle.createSource( )
+		p:move( ( x + 0.5 ) * self.parent.blockSize, ( y + 0.5 ) * self.parent.blockSize )
+		p:generate( 30, 500, { 245, 10, 10 } )
+		self.parent:newParticleEffect( p )
+	end
+	
+	map.update = function( self )
+		self.force:update( )
+		self:updateParticles( )
+		for i = #self.updaters, 1, -1 do
+			if self.updaters[i] then
+				self.updaters[i]:func( )
+			end
+		end
 	end
 	
 	map.blocks = { }
@@ -313,6 +444,7 @@ game.engine.map.create = function( )
 
 	map.hitBlock = function( self, x, y, damage, ... )
 		if not self.blocks[x] or not self.blocks[x][y] then return false end
+		if self.blocks[x][y].block.name == "Air" then return end
 		local data = { ... }
 		if #data == 1 and type( data[1] ) == "table" then data = data[1] end -- for if you pass in a table
 		local block = self.blocks[x][y].block
