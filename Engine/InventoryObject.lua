@@ -78,7 +78,7 @@ game.engine.inventory.create = function( )
 			if ct.data.item.count == 0 or ct.data.item.name == "empty" then
 				-- replace the hand with the slot
 				ct.data.item.name = self.data.item.name
-				if button == "l" then
+				if button == 1 then
 					ct.data.item.count = self.data.item.count
 					self.data.item = { name = "empty", count = 0 } --self.data.item:clear( )
 				else
@@ -88,7 +88,7 @@ game.engine.inventory.create = function( )
 			elseif self.data.item.count == 0 or self.data.item.name == "empty" or self.data.item.name == ct.data.item.name then
 				-- replace the slot with the hand
 				self.data.item.name = ct.data.item.name
-				if button == "l" then
+				if button == 1 then
 					self.data.item.count = self.data.item.count + ct.data.item.count
 					ct.data.item = { name = "empty", count = 0 } --ct.data.item:clear( )
 				else
@@ -265,7 +265,7 @@ game.engine.inventory.createHotbar = function( )
 				if game.engine.inventory.active.ct.data.item.count == 0 or game.engine.inventory.active.ct.data.item.name == "empty" then
 					-- replace the hand with the slot
 					game.engine.inventory.active.ct.data.item.name = self.data.item.name
-					if button == "l" then
+					if button == 1 then
 						game.engine.inventory.active.ct.data.item.count = self.data.item.count
 						self.data.item = { count = 0, name = "empty" }
 					else
@@ -275,7 +275,7 @@ game.engine.inventory.createHotbar = function( )
 				elseif self.data.item.count == 0 or self.data.item.name == "empty" or self.data.item.name == game.engine.inventory.active.ct.data.item.name then
 					-- replace the slot with the hand
 					self.data.item.name = game.engine.inventory.active.ct.data.item.name
-					if button == "l" then
+					if button == 1 then
 						self.data.item.count = self.data.item.count + game.engine.inventory.active.ct.data.item.count
 						game.engine.inventory.active.ct.data.item.count = 0
 						game.engine.inventory.active.ct.data.item.name = "empty"

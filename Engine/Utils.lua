@@ -99,7 +99,7 @@ end
 
 local loadPath
 loadPath = function( path, t )
-	local files = love.filesystem.enumerate( path )
+	local files = love.filesystem.getDirectoryItems( path )
 	for i = 1,#files do
 		if love.filesystem.isDirectory( path.."/"..files[i] ) then
 			t[files[i]] = { }

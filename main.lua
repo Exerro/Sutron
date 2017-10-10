@@ -52,7 +52,7 @@ om:load( )
 game.world:newMap( game.map )
 game.world:newMap( om )
 
-local files = love.filesystem.enumerate( "Resources" )
+local files = love.filesystem.getDirectoryItems( "Resources" )
 for i = 1,#files do
 	require( "Resources/"..files[i]:sub( 1, #files[i] - 4 ) )
 end
@@ -105,7 +105,7 @@ function love.load( )
 			if not game.world:getMapByID( ).blocks[xr] then
 				game.world:getMapByID( ).generation:newColumn( "right" )
 			end
-			if love.mouse.isDown( "l" ) and love.timer.getTime( ) - lastClickTime > 0.05 then
+			if love.mouse.isDown( 1 ) and love.timer.getTime( ) - lastClickTime > 0.05 then
 				if self:isMouseIn( love.mouse.getPosition( ) ) then
 					local x, y, xd, yd = game.player.camera:getClickPosition( love.mouse.getPosition( ) )
 					game.player.hotbar:useItem( game.world:getMapByID( ), x, y, xd, yd )
@@ -125,7 +125,7 @@ function love.load( )
 				game.player:setAnimation( "Walking" )
 				key = true
 			end
-			if love.keyboard.isDown( " " ) then
+			if love.keyboard.isDown( "space" ) then
 				local colliding = false
 				local y = math.floor( ( game.player.y + game.player.h ) / game.world:getMapByID( ).blockSize ) -- gets the block that is containing the bottom of the player
 				for x = math.floor( game.player.x / game.world:getMapByID( ).blockSize ), math.floor( game.player.x / game.world:getMapByID( ).blockSize ) + math.ceil( game.player.w / game.world:getMapByID( ).blockSize ) do
@@ -156,7 +156,7 @@ function love.load( )
 			end
 		elseif ev[1] == "Mouse" and ev[2] == "Down" and ev[6] == self then
 			local x, y, xd, yd = game.player.camera:getClickPosition( ev[3], ev[4] )
-			if ev[5] == "r" and game.world:getMapByID( ).blocks[x] and game.world:getMapByID( ).blocks[x][y].block.inventory then
+			if ev[5] == 2 and game.world:getMapByID( ).blocks[x] and game.world:getMapByID( ).blocks[x][y].block.inventory then
 				game.world:getMapByID( ).blocks[x][y].block.inventory:activate( )
 			end
 		elseif ev[1] == "Keyboard" and ev[2] == "Down" then
